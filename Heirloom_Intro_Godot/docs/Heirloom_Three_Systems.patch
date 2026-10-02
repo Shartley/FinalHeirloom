@@ -1,0 +1,2042 @@
+diff --git a/Heirloom_Game/assets/marble.gdshader b/Heirloom_Game/assets/marble.gdshader
+new file mode 100644
+index 0000000..bd29edc
+--- /dev/null
++++ b/Heirloom_Game/assets/marble.gdshader
+@@ -0,0 +1,10 @@
++shader_type spatial;
++render_mode diffuse_burley, specular_schlick_ggx;
++uniform vec4 tint : source_color = vec4(0.68, 0.67, 0.62, 1.0);
++void fragment() {
++    float wave = sin(UV.x * 38.0 + sin(UV.y * 12.0) * 2.5 + UV.y * 8.0);
++    float veins = 1.0 - smoothstep(0.02, 0.08, abs(wave));
++    ALBEDO = tint.rgb * (1.0 - veins * 0.065);
++    ROUGHNESS = 0.47;
++    SPECULAR = 0.30;
++}
+diff --git a/Heirloom_Game/assets/marble.gdshader.uid b/Heirloom_Game/assets/marble.gdshader.uid
+new file mode 100644
+index 0000000..0677b44
+--- /dev/null
++++ b/Heirloom_Game/assets/marble.gdshader.uid
+@@ -0,0 +1 @@
++uid://duhjo52gvphp6
+diff --git a/Heirloom_Game/assets/wallpaper.gdshader b/Heirloom_Game/assets/wallpaper.gdshader
+new file mode 100644
+index 0000000..70816e4
+--- /dev/null
++++ b/Heirloom_Game/assets/wallpaper.gdshader
+@@ -0,0 +1,16 @@
++shader_type spatial;
++render_mode diffuse_burley;
++uniform vec4 paper : source_color = vec4(0.62, 0.55, 0.43, 1.0);
++uniform vec4 ink : source_color = vec4(0.31, 0.24, 0.19, 1.0);
++uniform vec2 repeats = vec2(18.0, 5.0);
++void fragment() {
++    vec2 cell = UV * repeats;
++    cell.x += mod(floor(cell.y), 2.0) * 0.5;
++    vec2 p = fract(cell) - 0.5;
++    float leaf = exp(-length(p * vec2(8.0, 3.0)) * 3.0);
++    float petals = exp(-length((abs(p) - vec2(0.12, 0.13)) * vec2(9.0, 6.0)) * 3.0);
++    float border = 1.0 - smoothstep(0.012, 0.035, abs(abs(p.x) + abs(p.y) - 0.40));
++    float motif = clamp(leaf * 2.0 + petals * 1.4 + border * 0.35, 0.0, 1.0);
++    ALBEDO = mix(paper.rgb, ink.rgb, motif * 0.60);
++    ROUGHNESS = 0.90;
++}
+diff --git a/Heirloom_Game/assets/wallpaper.gdshader.uid b/Heirloom_Game/assets/wallpaper.gdshader.uid
+new file mode 100644
+index 0000000..baf10f0
+--- /dev/null
++++ b/Heirloom_Game/assets/wallpaper.gdshader.uid
+@@ -0,0 +1 @@
++uid://cc1ka85a0iu2f
+diff --git a/Heirloom_Game/assets/wood.gdshader b/Heirloom_Game/assets/wood.gdshader
+new file mode 100644
+index 0000000..a5b5c40
+--- /dev/null
++++ b/Heirloom_Game/assets/wood.gdshader
+@@ -0,0 +1,11 @@
++shader_type spatial;
++render_mode diffuse_burley, specular_schlick_ggx;
++uniform vec4 tint : source_color = vec4(0.24, 0.13, 0.075, 1.0);
++void fragment() {
++    vec2 p = UV * vec2(5.0, 45.0);
++    float grain = sin(p.y + sin(p.x * 2.8) * 1.2 + sin(p.x * 0.8) * 2.0);
++    float fine = sin(p.y * 5.0 + p.x * 0.9);
++    ALBEDO = tint.rgb * (0.95 + grain * 0.075 + fine * 0.020);
++    ROUGHNESS = 0.51;
++    SPECULAR = 0.35;
++}
+diff --git a/Heirloom_Game/assets/wood.gdshader.uid b/Heirloom_Game/assets/wood.gdshader.uid
+new file mode 100644
+index 0000000..de2365c
+--- /dev/null
++++ b/Heirloom_Game/assets/wood.gdshader.uid
+@@ -0,0 +1 @@
++uid://darpfpu4vg1u5
+diff --git a/Heirloom_Game/project.godot b/Heirloom_Game/project.godot
+index 05f47c3..5cb4c81 100644
+--- a/Heirloom_Game/project.godot
++++ b/Heirloom_Game/project.godot
+@@ -12,7 +12,7 @@ config_version=5
+ 
+ config/name="Heirloom"
+ run/main_scene="res://scenes/Main.tscn"
+-config/features=PackedStringArray("4.7")
++config/features=PackedStringArray("4.3", "GL Compatibility")
+ 
+ [autoload]
+ 
+@@ -68,8 +68,13 @@ restart={
+ "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":82,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+ ]
+ }
++drop_heirloom={
++"deadzone": 0.5,
++"events": [Object(InputEventKey,"physical_keycode":71)]
++}
+ 
+ [rendering]
+ 
++
+ renderer/rendering_method="gl_compatibility"
+ renderer/rendering_method.mobile="gl_compatibility"
+diff --git a/Heirloom_Game/scenes/Main.tscn b/Heirloom_Game/scenes/Main.tscn
+index 15ee4a7..d6f6747 100644
+--- a/Heirloom_Game/scenes/Main.tscn
++++ b/Heirloom_Game/scenes/Main.tscn
+@@ -1,4 +1,4 @@
+-[gd_scene load_steps=22 format=3]
++[gd_scene load_steps=23 format=3]
+ 
+ [ext_resource path="res://scripts/main.gd" type="Script" id="1"]
+ [ext_resource path="res://scripts/time_system.gd" type="Script" id="3"]
+@@ -6,6 +6,7 @@
+ [ext_resource path="res://scripts/player.gd" type="Script" id="5"]
+ [ext_resource path="res://scripts/interactable.gd" type="Script" id="6"]
+ [ext_resource path="res://scripts/key.gd" type="Script" id="7"]
++[ext_resource path="res://scripts/environment_system.gd" type="Script" id="8"]
+ 
+ [sub_resource type="BoxMesh" id="BoxMesh_floor"]
+ size = Vector3(24, 0.2, 28)
+@@ -49,6 +50,8 @@ script = ExtResource("1")
+ script = ExtResource("3")
+ [node name="InventorySystem" type="Node" parent="."]
+ script = ExtResource("4")
++[node name="EnvironmentSystem" type="Node" parent="."]
++script = ExtResource("8")
+ 
+ [node name="World" type="Node3D" parent="."]
+ [node name="WorldEnvironment" type="WorldEnvironment" parent="World"]
+diff --git a/Heirloom_Game/scripts/environment_system.gd b/Heirloom_Game/scripts/environment_system.gd
+new file mode 100644
+index 0000000..6e36c7a
+--- /dev/null
++++ b/Heirloom_Game/scripts/environment_system.gd
+@@ -0,0 +1,158 @@
++extends Node
++## Owner: Samaii H. Owns puzzles, physical gates, secrets and house reactions.
++
++@onready var state = get_node("/root/GameState")
++@onready var main = get_parent()
++@onready var inventory = main.get_node("InventorySystem")
++@onready var world: Node3D = main.get_node("World")
++@onready var hidden_key: StaticBody3D = world.get_node("HiddenKey")
++@onready var attic_door: StaticBody3D = world.get_node("AtticDoor")
++@onready var chandelier: OmniLight3D = world.get_node("Chandelier")
++@onready var upstairs_light: OmniLight3D = world.get_node("UpstairsLight")
++var night_stage: String = "quiet"
++var elapsed: float = 0.0
++var puzzle_materials: Dictionary = {}
++
++func _ready() -> void:
++    _decorate_house()
++    state.active_heirloom_changed.connect(_on_active_heirloom_changed)
++    state.time_remaining_changed.connect(_on_time_remaining_changed)
++    state.heirloom_used.connect(_on_heirloom_used)
++    state.inventory_changed.connect(_on_inventory_changed)
++
++func reset_for_loop() -> void:
++    state.puzzle_flags = {
++        "music_box_open": false,
++        "attic_unlocked": false,
++        "attic_open": false,
++        "mirror_revealed": false,
++        "front_door_unlocked": false
++    }
++    hidden_key.visible = false
++    hidden_key.collision_layer = 0
++    attic_door.visible = true
++    attic_door.collision_layer = 1
++    attic_door.scale = Vector3.ONE
++    night_stage = "quiet"
++    elapsed = 0.0
++    _on_time_remaining_changed(state.time_remaining)
++    _on_active_heirloom_changed(state.active_heirloom)
++    _on_inventory_changed()
++
++func _process(delta: float) -> void:
++    if main.paused or main.won:
++        return
++    elapsed += delta
++    var pulse: float = sin(elapsed * (5.0 if night_stage == "restless" else 9.0))
++    chandelier.light_energy = 2.4 if night_stage == "quiet" else 1.65 + pulse * 0.30
++    upstairs_light.light_energy = 1.65 if night_stage == "quiet" else 1.45 + pulse * 0.45
++
++func interact_object(object: Node3D, player: CharacterBody3D) -> void:
++    if not main.can_act() or not object.visible or object.collision_layer == 0:
++        return
++    if player.nearby_target() != object:
++        main.show_message("Move closer to the object; walls block interactions.")
++        return
++    match object.get("kind"):
++        "heirloom":
++            inventory.collect_heirloom(object.heirloom_name, object)
++        "mirror_puzzle", "music_puzzle":
++            inventory.use_active(object)
++        "attic_door":
++            if state.puzzle_flags["attic_unlocked"]:
++                _set_flag("attic_open", true)
++                attic_door.visible = false
++                attic_door.collision_layer = 0
++                main.show_message("The passage opens. Take Mother's Mirror to the portrait beyond it.")
++            else:
++                main.show_message("The passage is sealed. Its carving needs the Music Box's melody.")
++        "exit_door":
++            if state.puzzle_flags["front_door_unlocked"]:
++                main.win_game()
++            else:
++                main.show_message("The front door is locked. Find the James family key.")
++        "key":
++            if inventory.collect_key():
++                hidden_key.visible = false
++                hidden_key.collision_layer = 0
++                main.show_message("The family key is yours. Return to the front door before dawn.")
++        "lore":
++            main.show_message(object.text)
++
++func objective_text() -> String:
++    if state.puzzle_flags.get("front_door_unlocked", false):
++        return "Return to the front door and escape."
++    if state.puzzle_flags.get("mirror_revealed", false):
++        return "Pick up the key beneath the portrait."
++    if not state.puzzle_flags.get("attic_unlocked", false):
++        return "Take the Music Box to the carved melody seal."
++    if not state.puzzle_flags.get("attic_open", false):
++        return "The seal is broken. Open the central passage."
++    return "Take Mother's Mirror to the portrait in the rear chamber."
++
++func _on_heirloom_used(heirloom_name: String, target: Node3D) -> void:
++    if not main.can_act():
++        return
++    if target == null or main.get_node("Player").nearby_target() != target:
++        main.show_message("Use the Music Box near the carved seal, or the Mirror near the family portrait.")
++        return
++    if heirloom_name == "Music Box" and target.get("kind") == "music_puzzle":
++        if state.puzzle_flags["music_box_open"]:
++            main.show_message("The melody seal is already open. Head to the central passage.")
++            return
++        _set_flag("music_box_open", true)
++        _set_flag("attic_unlocked", true)
++        main.show_message("Grandmother's song releases the seal. The curse takes 8 seconds; your steps grow heavy.")
++        state.ability_applied.emit(heirloom_name)
++    elif heirloom_name == "Mother's Mirror" and target.get("kind") == "mirror_puzzle":
++        if not state.puzzle_flags["attic_open"]:
++            main.show_message("Open the passage before trying to reach the portrait.")
++            return
++        if state.puzzle_flags["mirror_revealed"]:
++            main.show_message("The mirror has already revealed this secret.")
++            return
++        _set_flag("mirror_revealed", true)
++        hidden_key.visible = true
++        hidden_key.collision_layer = 1
++        main.show_message("Mother's reflection exposes the key. The curse takes 5 seconds; your steps grow heavy.")
++        state.ability_applied.emit(heirloom_name)
++    else:
++        main.show_message("This object needs a different heirloom. The seal needs a song; the portrait needs a reflection.")
++
++func _on_active_heirloom_changed(value: String) -> void:
++    # ActiveHeirloom: the puzzle visuals respond to the item being held.
++    var music_material: StandardMaterial3D = puzzle_materials["MusicPuzzle"]
++    var portrait_material: StandardMaterial3D = puzzle_materials["PortraitPuzzle"]
++    music_material.emission_enabled = value == "Music Box"
++    portrait_material.emission_enabled = value == "Mother's Mirror"
++
++func _on_time_remaining_changed(value: float) -> void:
++    # TimeRemaining: late-night changes use the actual slowed countdown.
++    night_stage = "dawn" if value <= 20.0 else ("restless" if value <= 60.0 else "quiet")
++    var environment: Environment = world.get_node("WorldEnvironment").environment
++    environment.ambient_light_energy = 0.35 if night_stage == "quiet" else 0.27
++
++func _on_inventory_changed() -> void:
++    # Inventory owns the normal key; only Environment changes the door lock.
++    if not state.puzzle_flags.is_empty():
++        _set_flag("front_door_unlocked", inventory.has_item("Family Key"))
++
++func _set_flag(flag: String, value: bool) -> void:
++    if state.puzzle_flags.get(flag, false) == value:
++        return
++    state.puzzle_flags[flag] = value
++    state.puzzle_changed.emit(flag, value)
++
++func _decorate_house() -> void:
++    var environment := Environment.new()
++    environment.background_mode = Environment.BG_COLOR
++    environment.background_color = Color("17121e")
++    environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
++    environment.ambient_light_color = Color("b5acc1")
++    environment.ambient_light_energy = 0.35
++    environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
++    world.get_node("WorldEnvironment").environment = environment
++    var visuals = preload("res://scripts/house_visuals.gd").new()
++    visuals.name = "HouseVisuals"
++    world.add_child(visuals)
++    puzzle_materials = visuals.build(world, main.get_node("Player"))
+diff --git a/Heirloom_Game/scripts/environment_system.gd.uid b/Heirloom_Game/scripts/environment_system.gd.uid
+new file mode 100644
+index 0000000..7e5372f
+--- /dev/null
++++ b/Heirloom_Game/scripts/environment_system.gd.uid
+@@ -0,0 +1 @@
++uid://0w743pcmx5jf
+diff --git a/Heirloom_Game/scripts/game_state.gd b/Heirloom_Game/scripts/game_state.gd
+index 47b1ce1..e337fb9 100644
+--- a/Heirloom_Game/scripts/game_state.gd
++++ b/Heirloom_Game/scripts/game_state.gd
+@@ -1,22 +1,29 @@
+ extends Node
++## Shared GDD seams. Systems publish only the state they own.
++## Inventory writes ActiveHeirloom/TimeEffect; Time writes TimeRemaining;
++## EnvironmentSystem writes puzzle_flags. Main coordinates their resets.
+ 
+ signal active_heirloom_changed(value: String)
+ signal time_remaining_changed(value: float)
+ signal time_effect_changed(value: String)
++signal inventory_changed
++signal heirloom_used(heirloom_name: String, target: Node3D)
++signal ability_applied(heirloom_name: String)
++signal time_cost_requested(seconds: float)
++signal puzzle_changed(flag: String, value: bool)
++signal dawn_reached(generation: int)
+ signal loop_restarted(loop_count: int)
+ signal game_won
+ 
+ var active_heirloom: String = "None"
+ var time_remaining: float = 180.0
++var generation_duration: float = 180.0
+ var time_effect: String = "normal"
+ var loop_count: int = 0
++var run_status: String = "playing"
+ var collected_heirlooms: Array[String] = []
+-var puzzle_flags := {
+-    "mirror_revealed": false,
+-    "music_box_open": false,
+-    "attic_unlocked": false,
+-    "front_door_unlocked": false
+-}
++var collected_items: Array[String] = []
++var puzzle_flags: Dictionary = {}
+ 
+ func set_active_heirloom(value: String) -> void:
+     active_heirloom = value
+@@ -29,24 +36,3 @@ func set_time_remaining(value: float) -> void:
+ func set_time_effect(value: String) -> void:
+     time_effect = value
+     time_effect_changed.emit(value)
+-
+-func reset_for_loop() -> void:
+-    loop_count += 1
+-    active_heirloom = "None"
+-    collected_heirlooms.clear()
+-    time_effect = "normal"
+-    time_remaining = maxf(90.0, 180.0 - loop_count * 10.0)
+-    puzzle_flags = {
+-        "mirror_revealed": false,
+-        "music_box_open": false,
+-        "attic_unlocked": false,
+-        "front_door_unlocked": false
+-    }
+-    active_heirloom_changed.emit(active_heirloom)
+-    time_effect_changed.emit(time_effect)
+-    time_remaining_changed.emit(time_remaining)
+-    loop_restarted.emit(loop_count)
+-
+-func reset_run() -> void:
+-    loop_count = -1
+-    reset_for_loop()
+diff --git a/Heirloom_Game/scripts/house_visuals.gd b/Heirloom_Game/scripts/house_visuals.gd
+new file mode 100644
+index 0000000..813b209
+--- /dev/null
++++ b/Heirloom_Game/scripts/house_visuals.gd
+@@ -0,0 +1,225 @@
++extends Node3D
++## Furnishes the mansion while keeping gameplay objects and rules separate.
++
++const ModelBuilder = preload("res://scripts/visual_builder.gd")
++var art = ModelBuilder.new()
++var targets: Array[Node3D] = []
++var player: CharacterBody3D
++var walk_phase: float = 0.0
++var character: Node3D
++
++func build(world: Node3D, actor: CharacterBody3D) -> Dictionary:
++    player = actor
++    var decoration := art.group(self, "MansionInterior")
++    _floor(decoration)
++    _walls(decoration)
++    _furniture(decoration)
++    _heirlooms(world)
++    _puzzles(world, decoration)
++    _lighting(world, decoration)
++    actor.get_node("MeshInstance3D").hide()
++    character = art.girl(actor)
++    var materials: Dictionary = {}
++    for pair in [["MusicPuzzle", "b67433"], ["PortraitPuzzle", "496b95"]]:
++        var material: StandardMaterial3D = art.materials["gold"].duplicate()
++        material.emission = Color(str(pair[1]))
++        material.emission_energy_multiplier = 1.0
++        materials[pair[0]] = material
++        var object: Node3D = world.get_node(str(pair[0]))
++        for sign_x in [-1.0, 1.0]:
++            var strip := art.box(object, Vector3(0.028, 1.02 if pair[0] == "MusicPuzzle" else 2.02, 0.025), Vector3(sign_x * (0.49 if pair[0] == "MusicPuzzle" else 0.76), 0, 0.12), "gold")
++            strip.material_override = material
++    var titles := {
++        "Watch": "Grandfather's Watch", "Mirror": "Mother's Mirror",
++        "MusicBox": "Music Box", "MusicPuzzle": "Carved melody seal",
++        "PortraitPuzzle": "James family portrait", "AtticDoor": "Sealed passage",
++        "ExitDoor": "Front door", "HiddenKey": "Family key", "Lore": "Family letter"
++    }
++    for object_name in titles:
++        var object: Node3D = world.get_node(object_name)
++        object.set_meta("title", titles[object_name])
++        var text := art.label(object, titles[object_name], Vector3(0, 1.15, 0), 28, 0.006)
++        if object_name in ["PortraitPuzzle", "AtticDoor", "ExitDoor"]:
++            text.position.y = 1.9
++        if object_name in ["Watch", "MusicBox", "Lore", "HiddenKey"]:
++            text.position.y = 0.75
++        text.name = "ObjectLabel"
++        text.billboard = BaseMaterial3D.BILLBOARD_ENABLED
++        text.modulate = Color("f1dec0")
++        text.outline_size = 5
++        text.outline_modulate = Color("231c17")
++        targets.append(object)
++    return materials
++
++func _process(delta: float) -> void:
++    if not is_instance_valid(player):
++        return
++    for target in targets:
++        target.get_node("ObjectLabel").visible = target.visible and player.global_position.distance_to(target.global_position) < 5.0
++    var moving: float = minf(Vector2(player.velocity.x, player.velocity.z).length() / 5.2, 1.0)
++    if not player.main.can_act():
++        moving = 0.0
++    walk_phase += delta * 8.0 * moving
++    character.get_node("ArmLeft").rotation.x = sin(walk_phase) * 0.35 * moving
++    character.get_node("ArmRight").rotation.x = -sin(walk_phase) * 0.35 * moving
++
++func _floor(parent: Node3D) -> void:
++    var floor_tiles := art.group(parent, "CheckeredMarble")
++    for x in range(-11, 12, 2):
++        for z in range(-13, 14, 2):
++            art.box(floor_tiles, Vector3(2, 0.014, 2), Vector3(x, 0.107, z), "marble" if (x + z) % 4 == 0 else "dark_marble")
++    var rug := art.group(parent, "ParlorRug", Vector3(-7.0, 0.123, 5.8))
++    art.box(rug, Vector3(6.5, 0.012, 5.0), Vector3.ZERO, "velvet")
++    art.box(rug, Vector3(6.10, 0.014, 4.60), Vector3(0, 0.006, 0), "cloth")
++    art.box(rug, Vector3(5.92, 0.016, 4.42), Vector3(0, 0.01, 0), "velvet")
++    for x in [-2.5, -1.5, -0.5, 0.5, 1.5, 2.5]:
++        for z in [-1.6, -0.7, 0.2, 1.1]:
++            var motif := art.box(rug, Vector3(0.25, 0.018, 0.25), Vector3(x, 0.012, z), "cloth")
++            motif.rotation.y = PI / 4.0
++    art.box(parent, Vector3(2.20, 0.014, 17.5), Vector3(0, 0.124, 1.8), "red")
++    for x in [-1.02, 1.02]:
++        art.box(parent, Vector3(0.045, 0.014, 17.4), Vector3(x, 0.132, 1.8), "cloth")
++
++func _wall_panel(parent: Node3D, position: Vector3, width: float, rotation: float = 0.0) -> void:
++    var wall := art.group(parent, "WallpaperAndWainscot", position)
++    wall.rotation.y = rotation
++    art.box(wall, Vector3(width, 3.25, 0.055), Vector3(0, 3.22, 0), "wallpaper")
++    art.box(wall, Vector3(width, 1.48, 0.065), Vector3(0, 0.85, 0.015), "wood")
++    for y in [0.21, 1.48, 1.59, 4.71, 4.87]:
++        art.box(wall, Vector3(width, 0.07, 0.13), Vector3(0, y, 0.05), "ivory" if y > 4.0 else "wood")
++    var panels: int = maxi(1, int(width / 1.8))
++    for i in range(panels):
++        var x: float = -width * 0.5 + (i + 0.5) * width / panels
++        art.box(wall, Vector3(width / panels - 0.17, 1.03, 0.012), Vector3(x, 0.84, 0.06), "dark")
++        art.box(wall, Vector3(width / panels - 0.25, 0.95, 0.012), Vector3(x, 0.84, 0.073), "wood")
++
++func _walls(parent: Node3D) -> void:
++    _wall_panel(parent, Vector3(0, 0, -13.78), 23.6)
++    _wall_panel(parent, Vector3(0, 0, 13.78), 23.6, PI)
++    _wall_panel(parent, Vector3(-11.78, 0, 0), 27.6, PI / 2.0)
++    _wall_panel(parent, Vector3(11.78, 0, 0), 27.6, -PI / 2.0)
++    art.box(parent, Vector3(24, 0.13, 28), Vector3(0, 5.03, 0), "ivory")
++    for x in [-7.0, 7.0]:
++        var wall := art.group(parent, "RearChamberWall", Vector3(x, 0, -8))
++        art.box(wall, Vector3(10, 5, 0.30), Vector3(0, 2.5, 0), "wood")
++        art.collider(wall, Vector3(10, 5, 0.30), Vector3(0, 2.5, 0))
++        _wall_panel(wall, Vector3(0, 0, 0.17), 10)
++        _wall_panel(wall, Vector3(0, 0, -0.17), 10, PI)
++    art.box(parent, Vector3(4.15, 1.57, 0.32), Vector3(0, 4.21, -8), "wood")
++    for side in [-1.0, 1.0]:
++        for z in [-10.7, -3.1, 7.3]:
++            art.window(parent, Vector3(side * 11.67, 2.86, z), -side * PI / 2.0)
++    for x in [-7.7, 7.7]:
++        art.window(parent, Vector3(x, 2.85, 13.62), PI)
++    # A wood fireplace gives the sitting room an architectural focal point.
++    var fireplace := art.group(parent, "Fireplace", Vector3(-11.35, 0.12, 4.0))
++    fireplace.rotation.y = PI / 2.0
++    art.box(fireplace, Vector3(2.2, 1.75, 0.16), Vector3(0, 0.87, 0), "wood")
++    art.box(fireplace, Vector3(1.30, 1.22, 0.02), Vector3(0, 0.70, 0.10), "dark")
++    for x in [-0.93, 0.93]:
++        art.box(fireplace, Vector3(0.22, 1.72, 0.45), Vector3(x, 0.87, 0.15), "ivory")
++    art.box(fireplace, Vector3(2.35, 0.13, 0.59), Vector3(0, 1.8, 0.17), "wood")
++    art.box(fireplace, Vector3(2.5, 0.10, 0.83), Vector3(0, 0.06, 0.22), "dark_marble")
++    art.collider(fireplace, Vector3(2.5, 1.85, 0.62), Vector3(0, 0.92, 0.17))
++    for z in [0.18, 0.32]:
++        art.rod(fireplace, Vector3(-0.4, 0.22, z), Vector3(0.4, 0.25, z), 0.085, "wood")
++
++func _furniture(parent: Node3D) -> void:
++    # The central aisle and both sides of the sealed passage stay clear.
++    art.sofa(parent, Vector3(-7.0, 0.12, 7.6))
++    art.table(parent, "ParlorCoffeeTable", Vector3(-7.0, 0.12, 5.75), 2.7, 1.25, 0.45)
++    art.chair(parent, Vector3(-9.25, 0.12, 5.0), -PI / 2.0)
++    art.chair(parent, Vector3(-4.5, 0.12, 5.8), PI / 2.0)
++    var watch_table := art.table(parent, "WatchTable", Vector3(-6, 0.12, 1), 1.65, 1.1, 0.54)
++    art.lamp(watch_table, Vector3(-0.58, 0.57, -0.22))
++    art.table(parent, "MusicBoxTable", Vector3(-4, 0.12, -4), 1.65, 1.10, 0.54)
++    var vanity := art.table(parent, "MirrorVanity", Vector3(6, 0.12, -2), 2.35, 1.00, 0.57)
++    art.lamp(vanity, Vector3(0.87, 0.60, -0.10))
++    art.chair(parent, Vector3(7.7, 0.12, -0.35), -0.25)
++    var writing_desk := art.table(parent, "WritingDesk", Vector3(5, 0.12, 4), 2.6, 1.35, 0.64)
++    art.lamp(writing_desk, Vector3(0.95, 0.67, -0.28))
++    art.chair(parent, Vector3(6.3, 0.12, 5.7), 0.15)
++    for x in [5.4, 9.1]:
++        art.bookcase(parent, Vector3(x, 0.12, -7.48))
++    art.bookcase(parent, Vector3(-11.23, 0.12, -3.8), PI / 2.0)
++    art.bookcase(parent, Vector3(11.20, 0.12, 3.0), -PI / 2.0)
++    art.bookcase(parent, Vector3(-6.8, 0.12, -13.35))
++    art.bookcase(parent, Vector3(-3.2, 0.12, -13.35))
++    art.table(parent, "PortraitConsole", Vector3(4, 0.12, -13.05), 2.65, 0.76, 0.54)
++    art.chair(parent, Vector3(8.6, 0.12, -11.1), -0.35)
++    var study := art.table(parent, "RearStudyDesk", Vector3(-7.6, 0.12, -10.7), 2.3, 1.1, 0.78)
++    art.lamp(study, Vector3(-0.82, 0.81, -0.21))
++    art.chair(parent, Vector3(-7.6, 0.12, -9.1))
++    for i in range(3):
++        art.box(parent, Vector3(0.31, 0.045, 0.42), Vector3(-7.70 + i * 0.035, 0.59 + i * 0.05, 5.75), "blue" if i % 2 else "red")
++
++func _replace_shape(object: Node3D, size: Vector3, offset: Vector3 = Vector3.ZERO) -> void:
++    object.get_node("MeshInstance3D").hide()
++    var shape := BoxShape3D.new()
++    shape.size = size
++    var collision: CollisionShape3D = object.get_node("CollisionShape3D")
++    collision.shape = shape
++    collision.scale = Vector3.ONE
++    collision.position = offset
++
++func _heirlooms(world: Node3D) -> void:
++    var watch: Node3D = world.get_node("Watch")
++    _replace_shape(watch, Vector3(0.74, 0.30, 0.82), Vector3(0, 0.10, 0))
++    art.pocket_watch(watch)
++    var mirror: Node3D = world.get_node("Mirror")
++    _replace_shape(mirror, Vector3(0.73, 0.97, 0.28), Vector3(0, 0.14, 0))
++    art.mirror(mirror)
++    var music: Node3D = world.get_node("MusicBox")
++    _replace_shape(music, Vector3(0.88, 0.36, 0.57), Vector3(0, 0.15, 0))
++    art.music_box(music)
++    var letter: Node3D = world.get_node("Lore")
++    _replace_shape(letter, Vector3(0.72, 0.10, 0.47))
++    art.letter(letter)
++
++func _door_frame(parent: Node3D, position: Vector3, width: float, height: float) -> void:
++    var frame := art.group(parent, "DoorFrame", position)
++    for x in [-width * 0.5 - 0.08, width * 0.5 + 0.08]:
++        art.box(frame, Vector3(0.18, height + 0.15, 0.34), Vector3(x, 0, 0), "ivory")
++    art.box(frame, Vector3(width + 0.35, 0.17, 0.35), Vector3(0, height * 0.5 + 0.04, 0), "ivory")
++
++func _puzzles(world: Node3D, decoration: Node3D) -> void:
++    var seal: Node3D = world.get_node("MusicPuzzle")
++    seal.position = Vector3(-8, 1.8, -7.64)
++    _replace_shape(seal, Vector3(1.0, 1.06, 0.22))
++    art.seal(seal)
++    var portrait: Node3D = world.get_node("PortraitPuzzle")
++    portrait.position = Vector3(4, 2.12, -13.58)
++    _replace_shape(portrait, Vector3(1.6, 2.07, 0.20))
++    art.framed_portrait(portrait)
++    var key: Node3D = world.get_node("HiddenKey")
++    key.position = Vector3(4, 0.70, -12.94)
++    _replace_shape(key, Vector3(0.40, 0.16, 0.22))
++    art.family_key(key)
++    var gate: Node3D = world.get_node("AtticDoor")
++    _replace_shape(gate, Vector3(4.0, 3.36, 0.25))
++    art.door(gate, 4.0, 3.36)
++    _door_frame(decoration, gate.position, 4.0, 3.36)
++    var exit: Node3D = world.get_node("ExitDoor")
++    exit.position.z = 13.64
++    _replace_shape(exit, Vector3(2.6, 3.36, 0.23))
++    art.door(exit, 2.6, 3.36, true)
++    _door_frame(decoration, exit.position, 2.6, 3.36)
++
++func _lighting(world: Node3D, decoration: Node3D) -> void:
++    var chandelier: OmniLight3D = world.get_node("Chandelier")
++    chandelier.shadow_enabled = true
++    chandelier.omni_range = 17.0
++    art.chandelier(chandelier)
++    var rear_light: OmniLight3D = world.get_node("UpstairsLight")
++    rear_light.position = Vector3(0, 3.8, -10.7)
++    rear_light.light_color = Color("a49cae")
++    rear_light.omni_range = 13.0
++    art.chandelier(rear_light)
++    world.get_node("MoonLight").light_energy = 0.25
++    for x in [-7.5, 7.5]:
++        var hall_light := OmniLight3D.new()
++        hall_light.position = Vector3(x, 3.1, -2)
++        hall_light.light_color = Color("ffcf99")
++        hall_light.light_energy = 1.1
++        hall_light.omni_range = 8.0
++        decoration.add_child(hall_light)
+diff --git a/Heirloom_Game/scripts/house_visuals.gd.uid b/Heirloom_Game/scripts/house_visuals.gd.uid
+new file mode 100644
+index 0000000..1554769
+--- /dev/null
++++ b/Heirloom_Game/scripts/house_visuals.gd.uid
+@@ -0,0 +1 @@
++uid://jrgk74pbqr37
+diff --git a/Heirloom_Game/scripts/interactable.gd b/Heirloom_Game/scripts/interactable.gd
+index b78a517..e2f7156 100644
+--- a/Heirloom_Game/scripts/interactable.gd
++++ b/Heirloom_Game/scripts/interactable.gd
+@@ -1,44 +1,10 @@
+ extends StaticBody3D
++## Scene objects forward interactions. The systems own the game rules.
+ 
+ @export_enum("heirloom", "mirror_puzzle", "music_puzzle", "attic_door", "exit_door", "lore") var kind := "lore"
+ @export var heirloom_name := ""
+ @export var text := "The house remembers you."
+-@onready var main := get_node("/root/Main")
+-@onready var state := get_node("/root/GameState")
+-@onready var inventory := get_node("/root/Main/InventorySystem")
++@onready var environment_system = get_node("/root/Main/EnvironmentSystem")
+ 
+-func interact(_player) -> void:
+-    match kind:
+-        "heirloom":
+-            inventory.collect_heirloom(heirloom_name)
+-            main.show_message("Collected " + heirloom_name + ".")
+-            visible = false
+-            collision_layer = 0
+-        "mirror_puzzle":
+-            if state.active_heirloom == "Mother's Mirror":
+-                state.puzzle_flags["mirror_revealed"] = true
+-                main.reveal_hidden_key()
+-                main.show_message("The mirror exposes a hidden key beneath the portrait.")
+-            else:
+-                main.show_message("The portrait looks ordinary. Something reflective may reveal more.")
+-        "music_puzzle":
+-            if state.active_heirloom == "Music Box":
+-                state.puzzle_flags["music_box_open"] = true
+-                state.puzzle_flags["attic_unlocked"] = true
+-                main.unlock_attic()
+-                main.show_message("The melody matches the carving. The attic lock releases.")
+-            else:
+-                main.show_message("A carved melody is missing its song.")
+-        "attic_door":
+-            if state.puzzle_flags["attic_unlocked"]:
+-                main.open_attic_door()
+-                main.show_message("The attic opens. The air bends around you.")
+-            else:
+-                main.show_message("The attic door is sealed by an old family sigil.")
+-        "exit_door":
+-            if state.puzzle_flags["front_door_unlocked"]:
+-                main.win_game()
+-            else:
+-                main.show_message("The front door will not open. Finish the family's mission first.")
+-        "lore":
+-            main.show_message(text)
++func interact(player: CharacterBody3D) -> void:
++    environment_system.interact_object(self, player)
+diff --git a/Heirloom_Game/scripts/inventory_system.gd b/Heirloom_Game/scripts/inventory_system.gd
+index 10e3a65..3bd9ed6 100644
+--- a/Heirloom_Game/scripts/inventory_system.gd
++++ b/Heirloom_Game/scripts/inventory_system.gd
+@@ -1,34 +1,152 @@
+ extends Node
++## Owner: Daniel A. Owns held items, selection, pickup/drop, abilities and curses.
+ 
+-@onready var state := get_node("/root/GameState")
+-var selected_index := -1
++# One carried heirloom matches the original concept. Increase this in Inspector
++# to use the collected-inventory/Tab behavior of the previous prototype.
++@export_range(1, 3, 1) var max_carried_heirlooms: int = 1
++@onready var state = get_node("/root/GameState")
++@onready var main = get_parent()
++var selected_index: int = -1
++var curse_remaining: float = 0.0
++var world_heirlooms: Dictionary = {}
++var initial_transforms: Dictionary = {}
++var remembered_heirlooms: Array[String] = []
+ 
+-func collect_heirloom(name: String) -> void:
+-    if name not in state.collected_heirlooms:
+-        state.collected_heirlooms.append(name)
+-    selected_index = state.collected_heirlooms.find(name)
+-    state.set_active_heirloom(name)
+-    _refresh_effect()
++const MEMORIES: Dictionary = {
++    "Grandfather's Watch": "Grandfather waited here for a dawn that never freed him.",
++    "Mother's Mirror": "Mother hid the family key where only her reflection could see it.",
++    "Music Box": "Grandmother's melody is the promise that opens the sealed passage."
++}
++
++func _ready() -> void:
++    for object in main.get_node("World").get_children():
++        if object.get("kind") == "heirloom":
++            world_heirlooms[object.heirloom_name] = object
++            initial_transforms[object.heirloom_name] = object.global_transform
++    state.ability_applied.connect(_on_ability_applied)
++
++func _process(delta: float) -> void:
++    if main.can_act():
++        curse_remaining = maxf(0.0, curse_remaining - delta)
++
++func reset_for_loop() -> void:
++    state.collected_heirlooms.clear()
++    state.collected_items.clear()
++    remembered_heirlooms.clear()
++    selected_index = -1
++    curse_remaining = 0.0
++    state.set_time_effect("normal")
++    state.set_active_heirloom("None")
++    for heirloom_name in world_heirlooms:
++        var object: Node3D = world_heirlooms[heirloom_name]
++        object.global_transform = initial_transforms[heirloom_name]
++        object.visible = true
++        object.collision_layer = 1
++    state.inventory_changed.emit()
++
++func collect_heirloom(heirloom_name: String, source: Node3D = null) -> bool:
++    if not main.can_act() or not world_heirlooms.has(heirloom_name):
++        return false
++    if heirloom_name in state.collected_heirlooms:
++        return false
++    if source == null:
++        source = world_heirlooms[heirloom_name]
++    if not source.visible:
++        return false
++    if state.collected_heirlooms.size() >= max_carried_heirlooms:
++        # Exchange on the same pedestal so neither item becomes unreachable.
++        _place_in_world(state.active_heirloom, source.global_transform)
++        state.collected_heirlooms.erase(state.active_heirloom)
++    state.collected_heirlooms.append(heirloom_name)
++    source.visible = false
++    source.collision_layer = 0
++    _select(state.collected_heirlooms.find(heirloom_name))
++    state.inventory_changed.emit()
++    var memory: String = ""
++    if heirloom_name not in remembered_heirlooms:
++        remembered_heirlooms.append(heirloom_name)
++        memory = "\nMemory: " + str(MEMORIES[heirloom_name])
++    main.show_message("Holding " + heirloom_name + "." + memory)
++    return true
+ 
+ func switch_heirloom() -> void:
+-    if state.collected_heirlooms.is_empty():
++    if not main.can_act() or state.collected_heirlooms.is_empty():
+         return
+-    selected_index = (selected_index + 1) % state.collected_heirlooms.size()
+-    state.set_active_heirloom(state.collected_heirlooms[selected_index])
+-    _refresh_effect()
++    if state.collected_heirlooms.size() == 1:
++        main.show_message("You can carry one heirloom. Pick up another to swap; G drops this one." if max_carried_heirlooms == 1 else "Find another heirloom before switching; G drops this one.")
++        return
++    _select((selected_index + 1) % state.collected_heirlooms.size())
++
++func drop_active(player: CharacterBody3D) -> bool:
++    if not main.can_act() or state.active_heirloom == "None":
++        return false
++    for offset in [Vector3(1.8, 0, 0), Vector3(-1.8, 0, 0), Vector3(0, 0, 1.8), Vector3(0, 0, -1.8)]:
++        var point: Vector3 = player.global_position + offset
++        point.y = 0.8
++        var query := PhysicsRayQueryParameters3D.create(player.global_position + Vector3(0, 0.3, 0), point, 1, [player.get_rid()])
++        if not player.get_world_3d().direct_space_state.intersect_ray(query).is_empty():
++            continue
++        var dropped: String = state.active_heirloom
++        _place_in_world(dropped, Transform3D(Basis.IDENTITY, point))
++        state.collected_heirlooms.erase(dropped)
++        _select(0 if not state.collected_heirlooms.is_empty() else -1)
++        state.inventory_changed.emit()
++        main.show_message("Dropped " + dropped + ". You can pick it up again.")
++        return true
++    main.show_message("Move into a clear space before dropping this heirloom.")
++    return false
++
++func collect_key() -> bool:
++    if not main.can_act() or "Family Key" in state.collected_items:
++        return false
++    state.collected_items.append("Family Key")
++    state.inventory_changed.emit()
++    return true
++
++func has_item(item_name: String) -> bool:
++    return item_name in state.collected_items
+ 
+-func use_active() -> String:
++func use_active(target: Node3D = null) -> void:
++    if not main.can_act():
++        return
++    if state.active_heirloom == "None":
++        main.show_message("Find an heirloom first.")
++    elif state.active_heirloom == "Grandfather's Watch":
++        state.set_time_effect("normal" if state.time_effect == "slow" else "slow")
++        main.show_message("Time stretches. The watch ages your body; your steps grow heavy." if state.time_effect == "slow" else "The watch closes. Time and your steps return to normal.")
++    else:
++        if target == null:
++            target = main.get_node("Player").nearby_target()
++        state.heirloom_used.emit(state.active_heirloom, target)
++
++func movement_multiplier() -> float:
++    return 0.65 if state.time_effect == "slow" else (0.75 if curse_remaining > 0.0 else 1.0)
++
++func curse_text() -> String:
++    if state.time_effect == "slow":
++        return "WATCH ACTIVE • Dawn slowed / body aged"
++    if curse_remaining > 0.0:
++        return "THE HOUSE STIRS • Heavy steps for %.0fs" % ceil(curse_remaining)
+     match state.active_heirloom:
+-        "Grandfather's Watch":
+-            state.set_time_effect("slow" if state.time_effect != "slow" else "normal")
+-            return "The watch bends time." if state.time_effect == "slow" else "Time returns to normal."
+-        "Mother's Mirror":
+-            return "The mirror reveals what the house hides."
+-        "Music Box":
+-            return "A forgotten melody echoes through the hall."
+-        _:
+-            return "You are not carrying an heirloom."
+-
+-func _refresh_effect() -> void:
+-    if state.active_heirloom != "Grandfather's Watch" and state.time_effect == "slow":
+-        state.set_time_effect("normal")
++        "Grandfather's Watch": return "Q slows dawn • Curse: your steps slow while active"
++        "Mother's Mirror": return "Q reveals secrets • Curse: a successful reveal costs 5s"
++        "Music Box": return "Q opens melody seals • Curse: a successful song costs 8s"
++        _: return "E picks up an heirloom • Each holds a memory, ability and curse"
++
++func _on_ability_applied(heirloom_name: String) -> void:
++    # Repeated or invalid puzzle attempts never charge another curse.
++    if heirloom_name != state.active_heirloom:
++        return
++    curse_remaining = 4.0
++    state.time_cost_requested.emit(5.0 if heirloom_name == "Mother's Mirror" else 8.0)
++
++func _select(index: int) -> void:
++    selected_index = index
++    state.set_time_effect("normal")
++    state.set_active_heirloom(state.collected_heirlooms[index] if index >= 0 else "None")
++
++func _place_in_world(heirloom_name: String, placement: Transform3D) -> void:
++    var object: Node3D = world_heirlooms[heirloom_name]
++    object.global_transform = placement
++    object.visible = true
++    object.collision_layer = 1
+diff --git a/Heirloom_Game/scripts/key.gd b/Heirloom_Game/scripts/key.gd
+index 704759a..81101b9 100644
+--- a/Heirloom_Game/scripts/key.gd
++++ b/Heirloom_Game/scripts/key.gd
+@@ -1,9 +1,7 @@
+ extends StaticBody3D
+-@onready var main := get_node("/root/Main")
+-@onready var state := get_node("/root/GameState")
+-func interact(_player) -> void:
+-    if visible:
+-        state.puzzle_flags["front_door_unlocked"] = true
+-        main.show_message("You found the James family key. The front door can now be opened.")
+-        visible = false
+-        collision_layer = 0
++
++var kind: String = "key"
++@onready var environment_system = get_node("/root/Main/EnvironmentSystem")
++
++func interact(player: CharacterBody3D) -> void:
++    environment_system.interact_object(self, player)
+diff --git a/Heirloom_Game/scripts/main.gd b/Heirloom_Game/scripts/main.gd
+index b7d59fd..59fe581 100644
+--- a/Heirloom_Game/scripts/main.gd
++++ b/Heirloom_Game/scripts/main.gd
+@@ -1,67 +1,92 @@
+ extends Node3D
++## Coordinates the three systems and presents their state to the player.
+ 
+-@onready var state: Node = get_node("/root/GameState")
++@onready var state = get_node("/root/GameState")
++@onready var time_system = $TimeSystem
++@onready var inventory = $InventorySystem
++@onready var environment_system = $EnvironmentSystem
+ @onready var timer_label: Label = $UI/Margin/VBox/Timer
+ @onready var heirloom_label: Label = $UI/Margin/VBox/Heirloom
+ @onready var objective_label: Label = $UI/Margin/VBox/Objective
+ @onready var message_label: Label = $UI/Message
+ @onready var loop_label: Label = $UI/Margin/VBox/Loop
+-@onready var hidden_key: StaticBody3D = $World/HiddenKey
+-@onready var attic_blocker: StaticBody3D = $World/AtticDoor
+-@onready var upstairs_light: OmniLight3D = $World/UpstairsLight
+-var won := false
+-var paused := false
++
++var won: bool = false
++var paused: bool = false
+ var message_tween: Tween
+ var prompt: Label
+ var pause_label: Label
++var effects_label: Label
++var night_label: Label
++var spawn_transform: Transform3D
+ 
+ func _ready() -> void:
+-    _decorate()
++    spawn_transform = $Player.global_transform
++    _build_ui()
+     state.time_remaining_changed.connect(_on_time_changed)
+     state.active_heirloom_changed.connect(_on_heirloom_changed)
+-    hidden_key.visible = false
+-    hidden_key.collision_layer = 0
+-    _on_time_changed(state.time_remaining)
+-    _on_heirloom_changed(state.active_heirloom)
+-    loop_label.text = "Generation: %d" % (state.loop_count + 1)
+-    show_message("Escape before dawn. E interact • TAB switch • Q use heirloom")
++    state.loop_restarted.connect(_on_loop_restarted)
++    state.dawn_reached.connect(_on_dawn_reached)
++    time_system.reset_run()
++
++func can_act() -> bool:
++    return not won and not paused and state.run_status == "playing"
+ 
+ func _process(_delta: float) -> void:
+-    if state.time_remaining < 45.0:
+-        upstairs_light.light_energy = 2.0 + sin(Time.get_ticks_msec() / 110.0) * 0.7
+-    objective_label.text = _objective_text()
+-    var target = $Player.nearby_target()
+-    prompt.text = "[E / Q] " + target.get_meta("title", target.name) if target else "Explore the house • Approach an object to interact"
+-    if won or paused:
++    objective_label.text = environment_system.objective_text()
++    var target = $Player.nearby_target() if can_act() else null
++    prompt.text = "[E] " + str(target.get_meta("title", target.name)) if target else "Approach a labeled object to interact"
++    if target and target.get("kind") in ["music_puzzle", "mirror_puzzle"]:
++        prompt.text += "  •  [Q] use held heirloom"
++    if not can_act():
+         prompt.text = ""
+-    heirloom_label.text = "Heirloom: " + state.active_heirloom + ("  • TIME SLOWED / MOVEMENT HEAVY" if state.time_effect == "slow" else "")
+-
+-func _objective_text() -> String:
+-    if state.puzzle_flags["front_door_unlocked"]:
+-        return "Return to the front door and escape."
+-    if state.puzzle_flags["mirror_revealed"]:
+-        return "Collect the key beneath the portrait."
+-    if not state.puzzle_flags["attic_unlocked"]:
+-        return "Find the Music Box. Play it at the carved melody seal."
+-    return "Open the attic passage. Use Mother's Mirror at the portrait."
++    effects_label.text = inventory.curse_text()
++    night_label.text = {"quiet": "The house waits.", "restless": "Less than a minute. The house is stirring.", "dawn": "Dawn is close. Finish the family's mission."}[environment_system.night_stage]
++    heirloom_label.text = "Holding: " + state.active_heirloom
++    if inventory.has_item("Family Key"):
++        heirloom_label.text += "  •  Family key"
+ 
+ func restart_run() -> void:
+-    state.reset_run()
+-    get_tree().reload_current_scene()
++    time_system.reset_run()
+ 
+ func toggle_pause() -> void:
++    if won:
++        return
+     paused = not paused
+     pause_label.visible = paused
+     Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if paused else Input.MOUSE_MODE_CAPTURED
+ 
++func _on_loop_restarted(loop_count: int) -> void:
++    won = false
++    paused = false
++    inventory.reset_for_loop()
++    environment_system.reset_for_loop()
++    $Player.global_transform = spawn_transform
++    $Player.velocity = Vector3.ZERO
++    $Player/Pivot.rotation = Vector3.ZERO
++    $UI/WinPanel.visible = false
++    pause_label.visible = false
++    loop_label.text = "Generation: %d" % (loop_count + 1)
++    Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
++    _on_time_changed(state.time_remaining)
++    if loop_count == 0:
++        var limit_text: String = "Carry one heirloom; picking up another swaps it." if inventory.max_carried_heirlooms == 1 else "Carry up to %d heirlooms; Tab switches." % inventory.max_carried_heirlooms
++        show_message("Escape the James family home before dawn. " + limit_text)
++    else:
++        show_message("Generation %d inherits the unfinished curse. The house resets; %.0f seconds remain until dawn." % [loop_count + 1, state.generation_duration])
++
++func _on_dawn_reached(_generation: int) -> void:
++    $Player.velocity = Vector3.ZERO
++    show_message("Dawn has trapped you. The unfinished curse passes to the next generation.")
++
+ func _on_time_changed(value: float) -> void:
+-    var secs := int(ceil(value))
+-    timer_label.text = "Dawn in %02d:%02d" % [secs / 60, secs % 60]
+-    if value < 30:
+-        timer_label.modulate = Color(1.0, 0.55, 0.35)
++    var seconds: int = int(ceil(value))
++    var minutes: int = seconds / 60
++    timer_label.text = "Dawn in %02d:%02d" % [minutes, seconds % 60]
++    timer_label.modulate = Color("ff9868") if value <= 30.0 else Color.WHITE
+ 
+ func _on_heirloom_changed(value: String) -> void:
+-    heirloom_label.text = "ActiveHeirloom: " + value
++    heirloom_label.text = "Holding: " + value
+ 
+ func show_message(text: String) -> void:
+     message_label.text = text
+@@ -69,91 +94,71 @@ func show_message(text: String) -> void:
+     if message_tween:
+         message_tween.kill()
+     message_tween = create_tween()
+-    message_tween.tween_interval(4.0)
++    message_tween.tween_interval(6.0)
+     message_tween.tween_property(message_label, "modulate:a", 0.0, 0.6)
+ 
+-func reveal_hidden_key() -> void:
+-    if state.puzzle_flags["front_door_unlocked"]:
+-        return
+-    hidden_key.visible = true
+-    hidden_key.collision_layer = 1
+-
+-func unlock_attic() -> void:
+-    attic_blocker.scale = Vector3(1.04, 1.04, 1.04)
+-
+-func open_attic_door() -> void:
+-    attic_blocker.visible = false
+-    attic_blocker.collision_layer = 0
+-
+ func win_game() -> void:
+-    if won:
++    if not can_act() or not inventory.has_item("Family Key"):
+         return
+     won = true
+-    $TimeSystem.running = false
++    state.run_status = "won"
++    time_system.running = false
++    $Player.velocity = Vector3.ZERO
+     $UI/WinPanel.visible = true
+     Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+     state.game_won.emit()
+ 
+-func _decorate() -> void:
+-    var environment := Environment.new()
+-    environment.background_mode = Environment.BG_COLOR
+-    environment.background_color = Color("17121e")
+-    environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+-    environment.ambient_light_color = Color("b5acc1")
+-    environment.ambient_light_energy = 0.65
+-    $World/WorldEnvironment.environment = environment
+-    var titles := {"Watch": "Grandfather's Watch", "Mirror": "Mother's Mirror", "MusicBox": "Music Box", "MusicPuzzle": "Carved melody seal", "PortraitPuzzle": "James family portrait", "AtticDoor": "Attic passage", "ExitDoor": "Front door", "HiddenKey": "Family key", "Lore": "Family letter"}
+-    for object_name in titles:
+-        var object = $World.get_node(object_name)
+-        object.set_meta("title", titles[object_name])
+-        var label := Label3D.new()
+-        label.text = titles[object_name]
+-        label.position.y = 1.5
+-        label.font_size = 38
+-        label.pixel_size = 0.008
+-        label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+-        label.modulate = Color("e5d4ad")
+-        object.add_child(label)
+-    for x in range(-11, 12, 2):
+-        for z in range(-13, 14, 2):
+-            var tile := MeshInstance3D.new()
+-            var mesh := BoxMesh.new()
+-            mesh.size = Vector3(2, 0.015, 2)
+-            tile.mesh = mesh
+-            var mat := StandardMaterial3D.new()
+-            mat.albedo_color = Color("837969") if (x + z) % 4 == 0 else Color("301703")
+-            mat.roughness = 0.35
+-            tile.material_override = mat
+-            tile.position = Vector3(x, 0.11, z)
+-            $World.add_child(tile)
+-    # A sealed rear chamber makes the music puzzle gate actual exploration.
+-    for x in [-7.0, 7.0]:
+-        var wall := StaticBody3D.new()
+-        wall.position = Vector3(x, 2.5, -8)
+-        var shape := BoxShape3D.new()
+-        shape.size = Vector3(10, 5, 0.3)
+-        var collision := CollisionShape3D.new()
+-        collision.shape = shape
+-        wall.add_child(collision)
+-        var visual := MeshInstance3D.new()
+-        var box := BoxMesh.new()
+-        box.size = shape.size
+-        visual.mesh = box
+-        var mat := StandardMaterial3D.new()
+-        mat.albedo_color = Color("261809")
+-        visual.material_override = mat
+-        wall.add_child(visual)
+-        $World.add_child(wall)
++func _build_ui() -> void:
++    var panel_style := StyleBoxFlat.new()
++    panel_style.bg_color = Color(0.055, 0.043, 0.040, 0.84)
++    panel_style.border_color = Color(0.64, 0.48, 0.27, 0.75)
++    panel_style.set_border_width_all(1)
++    panel_style.set_corner_radius_all(6)
++    var status_panel := Panel.new()
++    status_panel.position = Vector2(16, 16)
++    status_panel.size = Vector2(520, 277)
++    status_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
++    status_panel.add_theme_stylebox_override("panel", panel_style)
++    $UI.add_child(status_panel)
++    $UI.move_child(status_panel, 0)
++    $UI/Margin.offset_left = 32.0
++    $UI/Margin.offset_top = 27.0
++    $UI/Margin.offset_right = 520.0
++    var title := Label.new()
++    title.text = "HEIRLOOM   /   THE JAMES HOUSE"
++    title.add_theme_font_size_override("font_size", 19)
++    title.modulate = Color("ddbd82")
++    $UI/Margin/VBox.add_child(title)
++    $UI/Margin/VBox.move_child(title, 0)
++    objective_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
++    objective_label.custom_minimum_size.y = 45.0
++    effects_label = Label.new()
++    effects_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
++    effects_label.add_theme_font_size_override("font_size", 17)
++    effects_label.modulate = Color("dfbd8b")
++    $UI/Margin/VBox.add_child(effects_label)
++    night_label = Label.new()
++    night_label.add_theme_font_size_override("font_size", 17)
++    night_label.modulate = Color("c6bed5")
++    $UI/Margin/VBox.add_child(night_label)
+     prompt = Label.new()
+-    prompt.position = Vector2(260, 560)
+-    prompt.size = Vector2(760, 40)
++    prompt.position = Vector2(90, 560)
++    prompt.size = Vector2(1100, 40)
+     prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+     prompt.add_theme_font_size_override("font_size", 21)
+     $UI.add_child(prompt)
++    message_label.offset_left = 90.0
++    message_label.offset_right = 1190.0
++    message_label.offset_top = 610.0
++    message_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+     var controls := Label.new()
+-    controls.text = "WASD move   •   Mouse look   •   E interact   •   Q use   •   Tab equip   •   Esc pause   •   R new game"
+-    controls.position = Vector2(120, 690)
++    controls.text = "WASD move   •   Mouse look   •   E interact / swap   •   Q use   •   G drop   •   Esc pause   •   R new game"
++    if inventory.max_carried_heirlooms > 1:
++        controls.text += "   •   Tab equip"
++    controls.position = Vector2(115, 690)
+     controls.add_theme_font_size_override("font_size", 17)
++    controls.add_theme_color_override("font_shadow_color", Color.BLACK)
++    controls.add_theme_constant_override("shadow_offset_y", 2)
+     $UI.add_child(controls)
+     pause_label = Label.new()
+     pause_label.text = "PAUSED\nEsc to resume • R to start over"
+@@ -161,4 +166,9 @@ func _decorate() -> void:
+     pause_label.add_theme_font_size_override("font_size", 30)
+     pause_label.visible = false
+     $UI.add_child(pause_label)
++    $UI/WinPanel.add_theme_stylebox_override("panel", panel_style.duplicate())
++    for text_label in [prompt, message_label, pause_label]:
++        text_label.add_theme_color_override("font_shadow_color", Color.BLACK)
++        text_label.add_theme_constant_override("shadow_offset_x", 2)
++        text_label.add_theme_constant_override("shadow_offset_y", 2)
+     $UI/Crosshair.visible = false
+diff --git a/Heirloom_Game/scripts/player.gd b/Heirloom_Game/scripts/player.gd
+index 77d98e6..56a47f0 100644
+--- a/Heirloom_Game/scripts/player.gd
++++ b/Heirloom_Game/scripts/player.gd
+@@ -1,52 +1,49 @@
+ extends CharacterBody3D
+ 
+-@export var speed := 5.2
+-@export var mouse_sensitivity := 0.0025
++@export var speed: float = 5.2
++@export var mouse_sensitivity: float = 0.0025
+ @onready var pivot: Node3D = $Pivot
+ @onready var camera: Camera3D = $Pivot/SpringArm3D/Camera3D
+-@onready var ray: RayCast3D = $Pivot/SpringArm3D/Camera3D/RayCast3D
+-@onready var inventory := get_node("/root/Main/InventorySystem")
+-@onready var main := get_node("/root/Main")
+-
+-var gravity := 18.0
++@onready var inventory = get_node("/root/Main/InventorySystem")
++@onready var main = get_node("/root/Main")
++var gravity: float = 18.0
+ 
+ func _ready() -> void:
+     Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+     $Pivot/SpringArm3D.add_excluded_object(get_rid())
+ 
+ func _unhandled_input(event: InputEvent) -> void:
++    if event.is_echo():
++        return
+     if event.is_action_pressed("restart"):
+         main.restart_run()
+         return
+-    if main.won:
+-        return
+     if event.is_action_pressed("ui_cancel"):
+         main.toggle_pause()
+         return
+-    if main.paused:
++    if not main.can_act():
+         return
+     if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+         rotate_y(-event.relative.x * mouse_sensitivity)
+         pivot.rotate_x(-event.relative.y * mouse_sensitivity)
+-        pivot.rotation.x = clamp(pivot.rotation.x, deg_to_rad(-45), deg_to_rad(25))
++        pivot.rotation.x = clampf(pivot.rotation.x, deg_to_rad(-45), deg_to_rad(25))
+     if event.is_action_pressed("interact"):
+         _interact()
+     if event.is_action_pressed("switch_heirloom"):
+         inventory.switch_heirloom()
++    if event.is_action_pressed("drop_heirloom"):
++        inventory.drop_active(self)
+     if event.is_action_pressed("use_heirloom"):
+-        if main.state.active_heirloom == "Grandfather's Watch":
+-            main.show_message(inventory.use_active())
+-        else:
+-            _interact()
++        inventory.use_active(nearby_target())
+ 
+ func _physics_process(delta: float) -> void:
+-    if main.won or main.paused:
++    if not main.can_act():
+         return
+-    var input_vec := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+-    var dir := (transform.basis * Vector3(input_vec.x, 0, input_vec.y)).normalized()
+-    var pace: float = speed * (0.65 if main.state.time_effect == "slow" else 1.0)
+-    velocity.x = dir.x * pace
+-    velocity.z = dir.z * pace
++    var input_vector: Vector2 = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
++    var direction: Vector3 = (transform.basis * Vector3(input_vector.x, 0, input_vector.y)).normalized()
++    var pace: float = speed * inventory.movement_multiplier()
++    velocity.x = direction.x * pace
++    velocity.z = direction.z * pace
+     if not is_on_floor():
+         velocity.y -= gravity * delta
+     else:
+@@ -55,19 +52,19 @@ func _physics_process(delta: float) -> void:
+ 
+ func nearby_target():
+     var closest = null
+-    var distance := 2.8
++    var distance: float = 2.8
+     for object in main.get_node("World").get_children():
+         if not object.has_method("interact") or not object.visible or object.collision_layer == 0:
+             continue
+-        var d: float = global_position.distance_to(object.global_position)
+-        if d >= distance:
++        var object_distance: float = global_position.distance_to(object.global_position)
++        if object_distance >= distance:
+             continue
+         var query := PhysicsRayQueryParameters3D.create(global_position + Vector3(0, 0.4, 0), object.global_position, 1, [get_rid()])
+-        var hit := get_world_3d().direct_space_state.intersect_ray(query)
++        var hit: Dictionary = get_world_3d().direct_space_state.intersect_ray(query)
+         if not hit.is_empty() and hit.collider != object:
+             continue
+         closest = object
+-        distance = d
++        distance = object_distance
+     return closest
+ 
+ func _interact() -> void:
+diff --git a/Heirloom_Game/scripts/time_system.gd b/Heirloom_Game/scripts/time_system.gd
+index 9136a53..ab0644c 100644
+--- a/Heirloom_Game/scripts/time_system.gd
++++ b/Heirloom_Game/scripts/time_system.gd
+@@ -1,17 +1,55 @@
+ extends Node
++## Owner: Lionel B. Owns countdown, generation number and dawn transition.
+ 
+-@onready var state := get_node("/root/GameState")
+-var running := true
++@export var starting_seconds: float = 180.0
++@export var generation_penalty: float = 10.0
++@export var minimum_seconds: float = 90.0
++@export var watch_time_scale: float = 0.35
++@export var dawn_transition_seconds: float = 1.2
++@onready var state = get_node("/root/GameState")
++@onready var main = get_parent()
++
++var running: bool = true
++var transition_remaining: float = 0.0
++
++func _ready() -> void:
++    state.time_cost_requested.connect(consume_time)
++
++func reset_run() -> void:
++    start_generation(0)
++
++func start_generation(generation_index: int) -> void:
++    transition_remaining = 0.0
++    running = true
++    state.loop_count = generation_index
++    state.run_status = "playing"
++    state.generation_duration = maxf(minimum_seconds, starting_seconds - generation_index * generation_penalty)
++    state.set_time_remaining(state.generation_duration)
++    state.loop_restarted.emit(generation_index)
+ 
+ func _process(delta: float) -> void:
+-    if not running or get_node("/root/Main").paused:
++    if not running or main.paused or main.won:
++        return
++    if state.run_status == "dawn":
++        transition_remaining -= delta
++        if transition_remaining <= 0.0:
++            start_generation(state.loop_count + 1)
+         return
+-    var multiplier := 1.0
+-    if state.time_effect == "slow":
+-        multiplier = 0.35
++    var multiplier: float = watch_time_scale if state.time_effect == "slow" else 1.0
+     state.set_time_remaining(state.time_remaining - delta * multiplier)
+     if state.time_remaining <= 0.0:
+-        running = false
+-        await get_tree().create_timer(0.7).timeout
+-        state.reset_for_loop()
+-        get_tree().reload_current_scene()
++        _reach_dawn()
++
++func consume_time(seconds: float) -> void:
++    if not main.can_act():
++        return
++    state.set_time_remaining(state.time_remaining - maxf(seconds, 0.0))
++    if state.time_remaining <= 0.0:
++        _reach_dawn()
++
++func _reach_dawn() -> void:
++    if state.run_status != "playing":
++        return
++    state.run_status = "dawn"
++    transition_remaining = dawn_transition_seconds
++    state.dawn_reached.emit(state.loop_count + 1)
+diff --git a/Heirloom_Game/scripts/visual_builder.gd b/Heirloom_Game/scripts/visual_builder.gd
+new file mode 100644
+index 0000000..14cb0bb
+--- /dev/null
++++ b/Heirloom_Game/scripts/visual_builder.gd
+@@ -0,0 +1,360 @@
++extends RefCounted
++## Native, editable 3D models and materials. Contains no gameplay state.
++
++var materials: Dictionary = {}
++
++func _init() -> void:
++    for entry in {
++        "ivory": "d4c9ac", "white": "e7e3d7", "dark": "211a17",
++        "velvet": "55343f", "cloth": "8b7560", "skin": "925f43",
++        "hair": "201615", "ink": "282322", "paper": "ddc99f",
++        "green": "3b4b3d", "blue": "3a4857", "red": "693e36",
++        "gold": "b67433", "glass": "839eae", "light": "ffd5a0"
++    }:
++        var material := StandardMaterial3D.new()
++        material.albedo_color = Color(entry_color(entry))
++        material.roughness = 0.75
++        if entry == "gold":
++            material.metallic = 0.75
++            material.roughness = 0.25
++        if entry == "glass":
++            material.metallic = 0.85
++            material.roughness = 0.10
++            material.emission_enabled = true
++            material.emission = Color("233949")
++            material.emission_energy_multiplier = 0.3
++        if entry == "light":
++            material.emission_enabled = true
++            material.emission = Color("ffd5a0")
++            material.emission_energy_multiplier = 1.5
++        materials[entry] = material
++    materials["wood"] = shader_material("wood", {})
++    materials["wallpaper"] = shader_material("wallpaper", {})
++    materials["marble"] = shader_material("marble", {})
++    materials["dark_marble"] = shader_material("marble", {"tint": Color("332419")})
++
++func entry_color(entry: String) -> String:
++    return {
++        "ivory": "d4c9ac", "white": "e7e3d7", "dark": "211a17",
++        "velvet": "55343f", "cloth": "8b7560", "skin": "925f43",
++        "hair": "201615", "ink": "282322", "paper": "ddc99f",
++        "green": "3b4b3d", "blue": "3a4857", "red": "693e36",
++        "gold": "b67433", "glass": "839eae", "light": "ffd5a0"
++    }[entry]
++
++func shader_material(shader_name: String, parameters: Dictionary) -> ShaderMaterial:
++    var material := ShaderMaterial.new()
++    material.shader = load("res://assets/" + shader_name + ".gdshader")
++    for parameter in parameters:
++        material.set_shader_parameter(parameter, parameters[parameter])
++    return material
++
++func group(parent: Node3D, object_name: String, position: Vector3 = Vector3.ZERO) -> Node3D:
++    var node := Node3D.new()
++    node.name = object_name
++    node.position = position
++    parent.add_child(node)
++    return node
++
++func mesh(parent: Node3D, resource: Mesh, position: Vector3, key: String) -> MeshInstance3D:
++    var instance := MeshInstance3D.new()
++    instance.mesh = resource
++    instance.material_override = materials[key]
++    instance.position = position
++    parent.add_child(instance)
++    return instance
++
++func box(parent: Node3D, size: Vector3, position: Vector3, key: String = "wood") -> MeshInstance3D:
++    var resource := BoxMesh.new()
++    resource.size = size
++    return mesh(parent, resource, position, key)
++
++func cylinder(parent: Node3D, radius: float, height: float, position: Vector3, key: String, top_radius: float = -1.0) -> MeshInstance3D:
++    var resource := CylinderMesh.new()
++    resource.bottom_radius = radius
++    resource.top_radius = radius if top_radius < 0.0 else top_radius
++    resource.height = height
++    resource.radial_segments = 24
++    return mesh(parent, resource, position, key)
++
++func sphere(parent: Node3D, radius: float, position: Vector3, key: String, scale: Vector3 = Vector3.ONE) -> MeshInstance3D:
++    var resource := SphereMesh.new()
++    resource.radius = radius
++    resource.height = radius * 2.0
++    resource.radial_segments = 20
++    resource.rings = 12
++    var instance := mesh(parent, resource, position, key)
++    instance.scale = scale
++    return instance
++
++func torus(parent: Node3D, inner: float, outer: float, position: Vector3, key: String) -> MeshInstance3D:
++    var resource := TorusMesh.new()
++    resource.inner_radius = inner
++    resource.outer_radius = outer
++    resource.rings = 32
++    resource.ring_segments = 12
++    return mesh(parent, resource, position, key)
++
++func rod(parent: Node3D, start: Vector3, end: Vector3, radius: float, key: String) -> MeshInstance3D:
++    var instance := cylinder(parent, radius, start.distance_to(end), (start + end) * 0.5, key)
++    var direction: Vector3 = (end - start).normalized()
++    var axis: Vector3 = Vector3.UP.cross(direction)
++    if axis.length_squared() > 0.001:
++        instance.basis = Basis(axis.normalized(), Vector3.UP.angle_to(direction))
++    elif direction.y < 0.0:
++        instance.rotation.x = PI
++    return instance
++
++func collider(parent: Node3D, size: Vector3, position: Vector3) -> StaticBody3D:
++    var body := StaticBody3D.new()
++    body.position = position
++    var collision := CollisionShape3D.new()
++    var shape := BoxShape3D.new()
++    shape.size = size
++    collision.shape = shape
++    body.add_child(collision)
++    parent.add_child(body)
++    return body
++
++func label(parent: Node3D, text: String, position: Vector3, font_size: int = 22, pixel_size: float = 0.004) -> Label3D:
++    var node := Label3D.new()
++    node.text = text
++    node.position = position
++    node.font_size = font_size
++    node.pixel_size = pixel_size
++    node.modulate = Color("322921")
++    node.outline_size = 0
++    parent.add_child(node)
++    return node
++
++func pocket_watch(parent: Node3D) -> Node3D:
++    var root := group(parent, "PocketWatch", Vector3(0, 0.055, 0))
++    root.rotation.x = deg_to_rad(8)
++    cylinder(root, 0.35, 0.09, Vector3.ZERO, "gold")
++    cylinder(root, 0.31, 0.012, Vector3(0, 0.054, 0), "ivory")
++    torus(root, 0.304, 0.348, Vector3(0, 0.063, 0), "gold")
++    for i in range(60):
++        var angle: float = i * TAU / 60.0
++        var tick := box(root, Vector3(0.007, 0.004, 0.025 if i % 5 else 0.042), Vector3(sin(angle) * 0.283, 0.067, -cos(angle) * 0.283), "ink")
++        tick.rotation.y = -angle
++    for pair in [[0, "XII"], [3, "III"], [6, "VI"], [9, "IX"]]:
++        var angle: float = float(pair[0]) * TAU / 12.0
++        var numeral := label(root, str(pair[1]), Vector3(sin(angle) * 0.228, 0.072, -cos(angle) * 0.228), 26, 0.0015)
++        numeral.rotation.x = -PI / 2.0
++    var hour := box(root, Vector3(0.021, 0.009, 0.16), Vector3(-0.031, 0.082, -0.071), "ink")
++    hour.rotation.y = -0.38
++    box(root, Vector3(0.012, 0.010, 0.235), Vector3(0.012, 0.092, -0.11), "ink").rotation.y = 0.10
++    cylinder(root, 0.025, 0.018, Vector3(0, 0.094, 0), "gold")
++    cylinder(root, 0.038, 0.06, Vector3(0, 0, -0.38), "gold").rotation.x = PI / 2.0
++    torus(root, 0.042, 0.064, Vector3(0, 0.008, -0.45), "gold")
++    for i in range(12):
++        var link := torus(parent, 0.019, 0.029, Vector3(0.04 + i * 0.045, -0.025, -0.43 + sin(i * 0.55) * 0.055), "gold")
++        link.rotation.z = 0.45 if i % 2 else -0.45
++    return root
++
++func mirror(parent: Node3D) -> Node3D:
++    var root := group(parent, "VanityMirror")
++    var rim := torus(root, 0.285, 0.338, Vector3(0, 0.17, 0), "gold")
++    rim.rotation.x = PI / 2.0
++    rim.scale.z = 1.4
++    var glass := cylinder(root, 0.286, 0.035, Vector3(0, 0.17, 0.01), "glass")
++    glass.rotation.x = PI / 2.0
++    glass.scale.z = 1.4
++    for sign_x in [-1.0, 1.0]:
++        rod(root, Vector3(sign_x * 0.3, -0.16, 0), Vector3(sign_x * 0.3, 0.18, 0), 0.026, "gold")
++        sphere(root, 0.042, Vector3(sign_x * 0.32, 0.17, 0), "gold")
++    box(root, Vector3(0.58, 0.06, 0.30), Vector3(0, -0.29, 0), "wood")
++    for angle in range(0, 360, 45):
++        var radians: float = deg_to_rad(float(angle))
++        sphere(root, 0.03, Vector3(sin(radians) * 0.32, 0.17 + cos(radians) * 0.44, 0), "gold")
++    return root
++
++func music_box(parent: Node3D) -> Node3D:
++    var root := group(parent, "CarvedMusicBox")
++    box(root, Vector3(0.72, 0.25, 0.48), Vector3(0, 0.14, 0), "wood")
++    box(root, Vector3(0.77, 0.06, 0.53), Vector3(0, 0.29, 0), "wood")
++    for x in [-0.36, 0.36]:
++        for z in [-0.24, 0.24]:
++            sphere(root, 0.032, Vector3(x, 0.065, z), "gold")
++            box(root, Vector3(0.026, 0.24, 0.026), Vector3(x, 0.16, z), "gold")
++    box(root, Vector3(0.75, 0.012, 0.012), Vector3(0, 0.30, 0.27), "gold")
++    box(root, Vector3(0.12, 0.07, 0.03), Vector3(0, 0.14, 0.25), "gold")
++    torus(root, 0.085, 0.097, Vector3(0, 0.327, 0), "gold")
++    for i in range(5):
++        cylinder(root, 0.012, 0.012, Vector3(-0.20 + i * 0.10, 0.325, 0.16), "gold")
++    rod(root, Vector3(0.37, 0.14, 0), Vector3(0.46, 0.14, 0), 0.02, "gold")
++    rod(root, Vector3(0.46, 0.14, 0), Vector3(0.46, 0.20, 0), 0.02, "gold")
++    return root
++
++func family_key(parent: Node3D) -> void:
++    var root := group(parent, "BrassKey", Vector3(0, 0.05, 0))
++    torus(root, 0.065, 0.093, Vector3(-0.14, 0, 0), "gold")
++    rod(root, Vector3(-0.07, 0, 0), Vector3(0.20, 0, 0), 0.018, "gold")
++    for x in [0.11, 0.18]:
++        box(root, Vector3(0.036, 0.035, 0.072), Vector3(x, 0, 0.034), "gold")
++
++func letter(parent: Node3D) -> void:
++    box(parent, Vector3(0.68, 0.018, 0.43), Vector3(0, 0.03, 0), "paper")
++    for i in range(6):
++        box(parent, Vector3(0.46 - i % 3 * 0.07, 0.002, 0.007), Vector3(-0.035, 0.041, -0.14 + i * 0.043), "ink")
++    cylinder(parent, 0.045, 0.01, Vector3(0.22, 0.045, 0.14), "red")
++
++func framed_portrait(parent: Node3D) -> void:
++    var root := group(parent, "FamilyPortrait")
++    box(root, Vector3(1.45, 1.95, 0.08), Vector3.ZERO, "wood")
++    box(root, Vector3(1.20, 1.69, 0.03), Vector3(0, 0, 0.06), "paper")
++    for x in [-0.675, 0.675]:
++        box(root, Vector3(0.12, 1.97, 0.10), Vector3(x, 0, 0.08), "gold")
++    for y in [-0.915, 0.915]:
++        box(root, Vector3(1.45, 0.12, 0.10), Vector3(0, y, 0.08), "gold")
++    # Raised silhouettes give the portrait a readable family composition.
++    for figure in [[-0.29, 0.20, 0.15, "dark"], [0.27, 0.16, 0.16, "velvet"], [0.0, -0.27, 0.10, "white"]]:
++        sphere(root, float(figure[2]), Vector3(float(figure[0]), float(figure[1]) + 0.21, 0.09), "skin", Vector3(1, 1, 0.15))
++        sphere(root, float(figure[2]) * 1.8, Vector3(float(figure[0]), float(figure[1]) - 0.18, 0.09), str(figure[3]), Vector3(1, 1.35, 0.10))
++
++func seal(parent: Node3D) -> void:
++    box(parent, Vector3(0.9, 0.95, 0.12), Vector3.ZERO, "wood")
++    var ring := torus(parent, 0.29, 0.33, Vector3(0, 0, 0.1), "gold")
++    ring.rotation.x = PI / 2.0
++    rod(parent, Vector3(-0.08, -0.15, 0.16), Vector3(-0.08, 0.18, 0.16), 0.025, "gold")
++    sphere(parent, 0.065, Vector3(-0.11, -0.17, 0.16), "gold", Vector3(1, 0.7, 0.35))
++    rod(parent, Vector3(-0.08, 0.18, 0.16), Vector3(0.16, 0.10, 0.16), 0.025, "gold")
++
++func door(parent: Node3D, width: float, height: float, flip: bool = false) -> void:
++    var root := group(parent, "PanelledDoor")
++    if flip:
++        root.rotation.y = PI
++    box(root, Vector3(width, height, 0.18), Vector3.ZERO, "wood")
++    for x in [-width * 0.25, width * 0.25]:
++        for y in [-height * 0.23, height * 0.23]:
++            box(root, Vector3(width * 0.37, height * 0.34, 0.035), Vector3(x, y, 0.115), "dark")
++            box(root, Vector3(width * 0.33, height * 0.30, 0.018), Vector3(x, y, 0.139), "wood")
++    for x in [-0.12, 0.12]:
++        sphere(root, 0.065, Vector3(x, -0.08, 0.17), "gold")
++        box(root, Vector3(0.07, 0.21, 0.015), Vector3(x, -0.08, 0.148), "gold")
++
++func table(parent: Node3D, object_name: String, position: Vector3, width: float, depth: float, height: float) -> Node3D:
++    var root := group(parent, object_name, position)
++    box(root, Vector3(width, 0.10, depth), Vector3(0, height - 0.05, 0), "wood")
++    box(root, Vector3(width - 0.12, 0.16, depth - 0.12), Vector3(0, height - 0.18, 0), "wood")
++    for x in [-width * 0.38, width * 0.38]:
++        for z in [-depth * 0.34, depth * 0.34]:
++            cylinder(root, 0.065, height - 0.12, Vector3(x, (height - 0.12) * 0.5, z), "wood", 0.045)
++    collider(root, Vector3(width, height, depth), Vector3(0, height * 0.5, 0))
++    return root
++
++func sofa(parent: Node3D, position: Vector3) -> Node3D:
++    var root := group(parent, "ChesterfieldSofa", position)
++    box(root, Vector3(3.1, 0.42, 1.05), Vector3(0, 0.35, 0), "velvet")
++    box(root, Vector3(2.95, 0.92, 0.30), Vector3(0, 0.86, 0.44), "velvet")
++    for x in [-1.47, 1.47]:
++        cylinder(root, 0.18, 1.05, Vector3(x, 0.73, 0), "velvet").rotation.x = PI / 2.0
++    for x in [-0.91, 0.0, 0.91]:
++        sphere(root, 0.48, Vector3(x, 0.59, -0.09), "velvet", Vector3(0.95, 0.25, 0.96))
++    for x in [-1.02, 1.02]:
++        var pillow := sphere(root, 0.26, Vector3(x, 0.88, 0.16), "cloth", Vector3(1.0, 1.0, 0.33))
++        pillow.rotation.z = 0.18 * signf(x)
++    for x in [-1.05, -0.55, 0.0, 0.55, 1.05]:
++        for y in [0.82, 1.12]:
++            sphere(root, 0.025, Vector3(x, y, 0.275), "dark")
++    for x in [-1.32, 1.32]:
++        for z in [-0.35, 0.36]:
++            cylinder(root, 0.075, 0.22, Vector3(x, 0.11, z), "wood")
++    collider(root, Vector3(3.15, 1.35, 1.10), Vector3(0, 0.68, 0))
++    return root
++
++func chair(parent: Node3D, position: Vector3, rotation: float = 0.0) -> Node3D:
++    var root := group(parent, "Armchair", position)
++    root.rotation.y = rotation
++    box(root, Vector3(0.78, 0.11, 0.73), Vector3(0, 0.49, 0), "wood")
++    sphere(root, 0.36, Vector3(0, 0.57, -0.02), "cloth", Vector3(1, 0.22, 0.98))
++    box(root, Vector3(0.74, 0.72, 0.12), Vector3(0, 1.0, 0.30), "wood")
++    sphere(root, 0.31, Vector3(0, 1.0, 0.22), "cloth", Vector3(1, 1.08, 0.14))
++    for x in [-0.30, 0.30]:
++        for z in [-0.27, 0.28]:
++            cylinder(root, 0.043, 0.49, Vector3(x, 0.245, z), "wood")
++    collider(root, Vector3(0.80, 1.36, 0.80), Vector3(0, 0.68, 0))
++    return root
++
++func book(parent: Node3D, position: Vector3, width: float, height: float, key: String) -> void:
++    box(parent, Vector3(width, height, 0.22), position, key)
++    for y in [-height * 0.34, height * 0.34]:
++        box(parent, Vector3(width * 0.9, 0.014, 0.014), position + Vector3(0, y, 0.118), "ivory")
++
++func bookcase(parent: Node3D, position: Vector3, rotation: float = 0.0) -> Node3D:
++    var root := group(parent, "Bookshelf", position)
++    root.rotation.y = rotation
++    box(root, Vector3(2.30, 2.75, 0.08), Vector3(0, 1.375, -0.22), "wood")
++    for x in [-1.13, 1.13]:
++        box(root, Vector3(0.13, 2.75, 0.50), Vector3(x, 1.375, 0), "wood")
++    for y in [0.20, 0.80, 1.42, 2.04, 2.68]:
++        box(root, Vector3(2.30, 0.10, 0.52), Vector3(0, y, 0), "wood")
++    box(root, Vector3(2.52, 0.16, 0.61), Vector3(0, 2.79, 0), "wood")
++    var colors := ["green", "red", "blue", "dark", "cloth"]
++    for shelf in range(4):
++        for i in range(10):
++            var width: float = 0.12 + (i % 3) * 0.035
++            var height: float = 0.35 + ((i + shelf) % 4) * 0.035
++            book(root, Vector3(-0.95 + i * 0.20, 0.27 + shelf * 0.62 + height * 0.5, 0.02), width, height, colors[(i + shelf * 2) % colors.size()])
++    collider(root, Vector3(2.4, 2.85, 0.57), Vector3(0, 1.43, 0))
++    return root
++
++func window(parent: Node3D, position: Vector3, rotation: float = 0.0) -> void:
++    var root := group(parent, "CurtainedWindow", position)
++    root.rotation.y = rotation
++    box(root, Vector3(1.85, 2.20, 0.04), Vector3.ZERO, "glass")
++    for x in [-0.97, 0.97]:
++        box(root, Vector3(0.13, 2.40, 0.17), Vector3(x, 0, 0.05), "ivory")
++    for y in [-1.14, 1.14]:
++        box(root, Vector3(2.05, 0.13, 0.17), Vector3(0, y, 0.05), "ivory")
++    box(root, Vector3(0.065, 2.20, 0.08), Vector3(0, 0, 0.08), "ivory")
++    box(root, Vector3(1.9, 0.065, 0.08), Vector3(0, 0, 0.08), "ivory")
++    box(root, Vector3(2.24, 0.10, 0.36), Vector3(0, -1.24, 0.13), "wood")
++    rod(root, Vector3(-1.25, 1.36, 0.18), Vector3(1.25, 1.36, 0.18), 0.028, "dark")
++    for side in [-1.0, 1.0]:
++        for i in range(4):
++            cylinder(root, 0.074, 2.50, Vector3(side * (0.88 + i * 0.09), 0.01, 0.16), "velvet")
++
++func lamp(parent: Node3D, position: Vector3) -> void:
++    cylinder(parent, 0.13, 0.05, position, "dark")
++    cylinder(parent, 0.025, 0.30, position + Vector3(0, 0.17, 0), "gold")
++    cylinder(parent, 0.23, 0.28, position + Vector3(0, 0.40, 0), "ivory", 0.12)
++    var light := OmniLight3D.new()
++    light.position = position + Vector3(0, 0.35, 0)
++    light.light_color = Color("ffcc96")
++    light.light_energy = 0.7
++    light.omni_range = 4.0
++    parent.add_child(light)
++
++func chandelier(parent: Node3D) -> void:
++    rod(parent, Vector3(0, 0, 0), Vector3(0, 1.2, 0), 0.04, "dark")
++    torus(parent, 0.80, 0.85, Vector3(0, -0.10, 0), "dark")
++    for i in range(6):
++        var angle: float = i * TAU / 6.0
++        var end := Vector3(cos(angle) * 0.82, 0.05, sin(angle) * 0.82)
++        rod(parent, Vector3(0, 0.2, 0), end, 0.026, "dark")
++        cylinder(parent, 0.055, 0.22, end + Vector3(0, 0.13, 0), "ivory")
++        sphere(parent, 0.048, end + Vector3(0, 0.275, 0), "light", Vector3(0.7, 1.4, 0.7))
++    for part in parent.get_children():
++        if part is MeshInstance3D:
++            part.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
++
++func girl(parent: Node3D) -> Node3D:
++    var root := group(parent, "CharacterModel")
++    cylinder(root, 0.44, 0.88, Vector3(0, -0.30, 0), "white", 0.21)
++    cylinder(root, 0.443, 0.07, Vector3(0, -0.71, 0), "cloth", 0.423)
++    sphere(root, 0.24, Vector3(0, 0.19, 0), "white", Vector3(1, 1.2, 0.82))
++    cylinder(root, 0.075, 0.13, Vector3(0, 0.44, 0), "skin")
++    sphere(root, 0.22, Vector3(0, 0.64, 0), "skin", Vector3(0.9, 1.05, 0.88))
++    sphere(root, 0.23, Vector3(0, 0.69, 0.075), "hair", Vector3(1, 1.0, 0.74))
++    for x in [-0.14, 0.14]:
++        sphere(root, 0.09, Vector3(x, 0.79, 0.04), "hair")
++    for x in [-0.07, 0.07]:
++        sphere(root, 0.017, Vector3(x, 0.66, -0.194), "ink")
++    for sign_x in [-1.0, 1.0]:
++        var arm := group(root, "ArmLeft" if sign_x < 0 else "ArmRight", Vector3(sign_x * 0.24, 0.28, 0))
++        rod(arm, Vector3.ZERO, Vector3(sign_x * 0.05, -0.40, 0), 0.065, "skin")
++        sphere(arm, 0.065, Vector3(sign_x * 0.05, -0.43, 0), "skin")
++        cylinder(root, 0.063, 0.24, Vector3(sign_x * 0.13, -0.78, 0), "skin")
++        box(root, Vector3(0.14, 0.08, 0.23), Vector3(sign_x * 0.13, -0.92, -0.025), "dark")
++    return root
+diff --git a/Heirloom_Game/scripts/visual_builder.gd.uid b/Heirloom_Game/scripts/visual_builder.gd.uid
+new file mode 100644
+index 0000000..bc2ed13
+--- /dev/null
++++ b/Heirloom_Game/scripts/visual_builder.gd.uid
+@@ -0,0 +1 @@
++uid://c6wi1c7epovec
+diff --git a/Heirloom_Game/tests/navigation.gd b/Heirloom_Game/tests/navigation.gd
+new file mode 100644
+index 0000000..aaf5d00
+--- /dev/null
++++ b/Heirloom_Game/tests/navigation.gd
+@@ -0,0 +1,84 @@
++extends SceneTree
++## Walk the furnished escape route using the player's real collision body.
++## This catches furniture blocking routes that teleport-based checks cannot.
++
++var main
++var player: CharacterBody3D
++var checks: int = 0
++var failures: int = 0
++
++func _initialize() -> void:
++    call_deferred("run")
++
++func check(condition: bool, description: String) -> void:
++    checks += 1
++    if not condition:
++        failures += 1
++        push_error("FAIL: " + description)
++
++func walk(point: Vector2) -> void:
++    var steps: int = 0
++    var goal := Vector3(point.x, 1.06, point.y)
++    while Vector2(player.position.x, player.position.z).distance_to(point) > 0.16 and steps < 500:
++        await physics_frame
++        var direction: Vector3 = goal - player.position
++        direction.y = 0
++        direction = direction.normalized()
++        var pace: float = main.get_node("InventorySystem").movement_multiplier() * 5.2
++        player.velocity = Vector3(direction.x * pace, -0.2, direction.z * pace)
++        player.move_and_slide()
++        steps += 1
++    player.velocity = Vector3.ZERO
++    check(steps < 500, "walkable route to " + str(point))
++
++func interact(expected_name: String) -> void:
++    var target = player.nearby_target()
++    check(target != null and target.name == expected_name, "reachable " + expected_name)
++    if target != null:
++        player._interact()
++
++func run() -> void:
++    change_scene_to_file("res://scenes/Main.tscn")
++    await process_frame
++    await physics_frame
++    main = current_scene
++    player = main.get_node("Player")
++    player.set_physics_process(false)
++    main.get_node("TimeSystem").set_process(false)
++    main.get_node("InventorySystem").set_process(false)
++    await walk(Vector2(-3, 7))
++    await walk(Vector2(-3, 2.8))
++    await walk(Vector2(-6, 2.8))
++    interact("Watch")
++    player.inventory.use_active()
++    check(root.get_node("GameState").time_effect == "slow", "watch still works in furnished room")
++    player.inventory.use_active()
++    await walk(Vector2(-3, 2.8))
++    await walk(Vector2(-3, -2.2))
++    await walk(Vector2(-4, -2.2))
++    interact("MusicBox")
++    await walk(Vector2(-8, -5.8))
++    interact("MusicPuzzle")
++    await walk(Vector2(0, -5.8))
++    interact("AtticDoor")
++    await walk(Vector2(0, -10.0))
++    await walk(Vector2(0, -5.8))
++    await walk(Vector2(3.4, -5.8))
++    await walk(Vector2(3.4, -0.2))
++    await walk(Vector2(6, -0.2))
++    interact("Mirror")
++    await walk(Vector2(3.4, -0.2))
++    await walk(Vector2(3.4, -5.8))
++    await walk(Vector2(0, -5.8))
++    await walk(Vector2(0, -10.0))
++    await walk(Vector2(4, -11.8))
++    interact("PortraitPuzzle")
++    await walk(Vector2(4, -12.0))
++    interact("HiddenKey")
++    await walk(Vector2(0, -10.0))
++    await walk(Vector2(0, -5.8))
++    await walk(Vector2(0, 11.8))
++    interact("ExitDoor")
++    check(main.won, "escape by walking through the furnished mansion")
++    print("Navigation checks: %d passed, %d failed" % [checks - failures, failures])
++    quit(1 if failures else 0)
+diff --git a/Heirloom_Game/tests/smoke.gd b/Heirloom_Game/tests/smoke.gd
+index 97f67aa..17b008e 100644
+--- a/Heirloom_Game/tests/smoke.gd
++++ b/Heirloom_Game/tests/smoke.gd
+@@ -1,73 +1,200 @@
+ extends SceneTree
++## Integration checks through player input, world targeting and real physics gates.
++
++var failures: int = 0
++var checks: int = 0
++var main
++var state
++var inventory
++var time_system
++var environment_system
++var player
+ 
+ func _initialize() -> void:
+     call_deferred("run")
+ 
++func check(condition: bool, description: String) -> void:
++    checks += 1
++    if not condition:
++        failures += 1
++        push_error("FAIL: " + description)
++
++func press(action: String) -> void:
++    var event := InputEventAction.new()
++    event.action = action
++    event.pressed = true
++    player._unhandled_input(event)
++
++func approach(object_name: String, offset: Vector3 = Vector3(0, 0, 1.8)) -> Node3D:
++    var object: Node3D = main.get_node("World/" + object_name)
++    player.global_position = object.global_position + offset
++    player.global_position.y = 1.1
++    player.velocity = Vector3.ZERO
++    await physics_frame
++    await physics_frame
++    check(player.nearby_target() == object, "nearby targeting: " + object_name)
++    return object
++
++func gate_hit() -> Dictionary:
++    var query := PhysicsRayQueryParameters3D.create(Vector3(0, 1.1, -6), Vector3(0, 1.1, -10), 1, [player.get_rid()])
++    return player.get_world_3d().direct_space_state.intersect_ray(query)
++
+ func run() -> void:
+     change_scene_to_file("res://scenes/Main.tscn")
+     await process_frame
+     await physics_frame
+-    var main = current_scene
+-    var state = root.get_node("GameState")
+-    var inventory = main.get_node("InventorySystem")
+-    var player = main.get_node("Player")
+-    main.get_node("TimeSystem").running = false
+-    assert(InputMap.action_get_events("switch_heirloom")[0].physical_keycode == KEY_TAB)
+-    main.get_node("World/ExitDoor").interact(player)
+-    assert(not main.won)
+-    main.get_node("World/PortraitPuzzle").interact(player)
+-    assert(not state.puzzle_flags.mirror_revealed)
+-    main.get_node("World/Watch").interact(player)
+-    inventory.use_active()
++    main = current_scene
++    state = root.get_node("GameState")
++    inventory = main.get_node("InventorySystem")
++    time_system = main.get_node("TimeSystem")
++    environment_system = main.get_node("EnvironmentSystem")
++    player = main.get_node("Player")
++    # Deterministic countdown; test ticks are explicit while physics still runs.
++    time_system.set_process(false)
++    inventory.set_process(false)
++    check(InputMap.has_action("drop_heirloom"), "G drop input exists")
++    check(InputMap.action_get_events("drop_heirloom")[0].physical_keycode == KEY_G, "drop bound to G")
++    check(state.time_remaining == 180.0 and state.loop_count == 0, "initial timer and generation")
++    check(not main.get_node("World/HiddenKey").visible, "secret initially hidden")
++    check(not gate_hit().is_empty(), "sealed passage physically blocks movement")
++
++    await approach("ExitDoor", Vector3(0, 0, -1.8))
++    press("interact")
++    check(not main.won, "cannot escape without key")
++    await approach("MusicPuzzle")
++    press("use_heirloom")
++    check(not state.puzzle_flags["attic_unlocked"], "no item cannot solve seal")
++
++    await approach("Watch")
++    press("interact")
++    press("use_heirloom")
++    check(state.time_effect == "slow", "watch publishes TimeEffect")
++    check(inventory.movement_multiplier() == 0.65, "watch curse changes movement")
+     var before: float = state.time_remaining
+-    main.get_node("TimeSystem").running = true
+-    main.get_node("TimeSystem")._process(10.0)
+-    main.get_node("TimeSystem").running = false
+-    assert(is_equal_approx(state.time_remaining, before - 3.5))
+-    main.get_node("World/MusicBox").interact(player)
+-    assert(state.time_effect == "normal")
+-    main.get_node("World/MusicPuzzle").interact(player)
+-    assert(state.puzzle_flags.attic_unlocked)
+-    main.get_node("World/AtticDoor").interact(player)
+-    assert(main.get_node("World/AtticDoor").collision_layer == 0)
+-    main.get_node("World/Mirror").interact(player)
+-    main.get_node("World/PortraitPuzzle").interact(player)
+-    assert(main.get_node("World/HiddenKey").visible)
+-    main.get_node("World/HiddenKey").interact(player)
+-    main.get_node("World/PortraitPuzzle").interact(player)
+-    assert(not main.get_node("World/HiddenKey").visible)
+-    main.get_node("World/ExitDoor").interact(player)
+-    assert(main.won)
+-    state.reset_for_loop()
+-    assert(state.loop_count == 1 and state.time_remaining == 170.0)
+-    assert(state.collected_heirlooms.is_empty())
+-    state.reset_run()
+-    assert(state.loop_count == 0 and state.time_remaining == 180.0)
+-    change_scene_to_file("res://scenes/Main.tscn")
+-    await process_frame
++    time_system._process(10.0)
++    check(is_equal_approx(state.time_remaining, before - 3.5), "Time reads watch seam")
++    press("drop_heirloom")
++    check(state.active_heirloom == "None" and state.time_effect == "normal", "drop clears held item and watch effect")
++    check(main.get_node("World/Watch").visible, "dropped item restored to world")
+     await physics_frame
+-    main = current_scene
++    await physics_frame
++    check(player.nearby_target() == main.get_node("World/Watch"), "dropped item reachable")
++    press("interact")
++    check(state.active_heirloom == "Grandfather's Watch", "dropped item can be picked up")
++    var watch_origin: Transform3D = inventory.initial_transforms["Grandfather's Watch"]
++
++    await approach("MusicBox")
++    var swap_location: Vector3 = main.get_node("World/MusicBox").global_position
++    press("interact")
++    check(state.collected_heirlooms.size() == 1, "one carried heirloom enforced")
++    check(state.active_heirloom == "Music Box", "swap publishes new ActiveHeirloom")
++    check(main.get_node("World/Watch").visible and main.get_node("World/Watch").global_position.is_equal_approx(swap_location), "previous heirloom stays reachable at swap location")
++    await approach("MusicPuzzle")
++    before = state.time_remaining
++    press("use_heirloom")
++    check(state.puzzle_flags["attic_unlocked"], "music unlocks passage")
++    check(is_equal_approx(state.time_remaining, before - 8.0), "successful song curse costs eight seconds")
++    before = state.time_remaining
++    press("use_heirloom")
++    check(state.time_remaining == before, "repeating solved puzzle does not charge another curse")
++    check(not state.puzzle_flags["attic_open"], "unlocking and physically opening are separate")
++
++    await approach("AtticDoor")
++    press("interact")
++    await physics_frame
++    check(state.puzzle_flags["attic_open"] and gate_hit().is_empty(), "opened gate removes physical collision")
++    await approach("PortraitPuzzle")
++    press("use_heirloom")
++    check(not state.puzzle_flags["mirror_revealed"], "wrong ActiveHeirloom cannot reveal key")
++    await approach("Mirror")
++    press("interact")
++    await approach("PortraitPuzzle")
++    before = state.time_remaining
++    press("use_heirloom")
++    check(state.puzzle_flags["mirror_revealed"], "mirror solves portrait")
++    check(main.get_node("World/HiddenKey").visible, "mirror reveals secret object")
++    check(is_equal_approx(state.time_remaining, before - 5.0), "successful reflection curse costs five seconds")
++    await approach("HiddenKey", Vector3(0, 0, 0.9))
++    press("interact")
++    check(inventory.has_item("Family Key"), "Inventory owns collected key")
++    check(state.active_heirloom == "Mother's Mirror", "ordinary key does not occupy heirloom slot")
++    check(state.puzzle_flags["front_door_unlocked"], "Environment responds to key collection")
++    check(not main.get_node("World/HiddenKey").visible, "collected secret cannot reappear")
++    await approach("ExitDoor", Vector3(0, 0, -1.8))
++    press("interact")
++    check(main.won and state.run_status == "won", "complete escape route")
++    before = state.time_remaining
++    time_system._process(100.0)
++    check(state.time_remaining == before, "victory freezes countdown")
++
++    press("restart")
++    check(not main.won and state.loop_count == 0 and state.time_remaining == 180.0, "new run clears victory and generation")
++    check(state.collected_items.is_empty() and state.active_heirloom == "None", "new run clears inventory")
++    check(main.get_node("World/Watch").global_transform.is_equal_approx(watch_origin), "new run restores heirloom locations")
++    await physics_frame
++    check(not gate_hit().is_empty() and not main.get_node("World/HiddenKey").visible, "new run restores gate and secret")
++    await approach("Watch")
+     main.toggle_pause()
+     before = state.time_remaining
+-    main.get_node("TimeSystem")._process(5.0)
+-    assert(state.time_remaining == before)
++    time_system._process(5.0)
++    press("interact")
++    Input.action_press("move_forward")
++    var position_before: Vector3 = player.global_position
++    player._physics_process(1.0)
++    Input.action_release("move_forward")
++    check(state.time_remaining == before and state.active_heirloom == "None", "pause freezes timer and interaction")
++    check(player.global_position.is_equal_approx(position_before), "pause freezes movement")
+     main.toggle_pause()
+-    var watch = main.get_node("World/Watch")
+-    main.get_node("Player").position = watch.position + Vector3(0, 0.4, 1.8)
+-    await physics_frame
+-    assert(main.get_node("Player").nearby_target() == watch)
+-    main.get_node("Player").position = Vector3(0, 1.1, 9)
+-    main.get_node("TimeSystem").running = true
+-    state.set_time_remaining(0.01)
+-    main.get_node("TimeSystem")._process(0.1)
+-    await create_timer(0.85).timeout
+-    assert(state.loop_count == 1)
+-    assert(current_scene != main)
+-    assert(state.time_remaining > 168.0)
+-    print("PASS: escape, locked puzzles, watch, Tab, key, pause, reset, proximity, automatic dawn reload")
+-    if DisplayServer.get_name() != "headless":
+-        await process_frame
+-        await process_frame
+-        await RenderingServer.frame_post_draw
+-        root.get_texture().get_image().save_png("res://../../preview.png")
+-    quit()
++    press("interact")
++    press("use_heirloom")
++    check(state.time_effect == "slow", "resume restores interaction")
++
++    before = state.time_remaining
++    time_system.consume_time(before - 59.0)
++    check(environment_system.night_stage == "restless", "TimeRemaining makes house restless at sixty seconds")
++    environment_system._process(0.2)
++    check(main.get_node("World/Chandelier").light_energy < 5.0, "late countdown affects actual light")
++    time_system.consume_time(40.0)
++    check(environment_system.night_stage == "dawn", "last twenty seconds change environment stage")
++    time_system.consume_time(100.0)
++    check(state.run_status == "dawn" and not main.can_act(), "zero time freezes gameplay for dawn")
++    var transition_before: float = time_system.transition_remaining
++    main.toggle_pause()
++    time_system._process(5.0)
++    check(time_system.transition_remaining == transition_before, "pause also freezes dawn transition")
++    main.toggle_pause()
++    var node_count: int = main.get_node("World").get_child_count()
++    time_system._process(2.0)
++    check(state.loop_count == 1 and state.time_remaining == 170.0, "automatic next generation with stronger curse")
++    check(state.active_heirloom == "None" and state.time_effect == "normal", "generation clears inventory and ability")
++    check(not state.puzzle_flags["attic_unlocked"] and not state.puzzle_flags["mirror_revealed"], "generation resets all puzzle state")
++    check(environment_system.night_stage == "quiet", "generation restores environment")
++    check(main.get_node("World").get_child_count() == node_count, "generation does not duplicate world geometry")
++    check(player.global_position.is_equal_approx(main.spawn_transform.origin), "generation restores player spawn")
++
++    time_system.consume_time(200.0)
++    press("restart")
++    time_system._process(2.0)
++    check(state.loop_count == 0 and state.run_status == "playing", "restart during dawn has no stale pending reset")
++    time_system.start_generation(99)
++    check(state.time_remaining == 90.0, "difficulty has playable minimum")
++    press("restart")
++
++    # The optional original multi-item mode still clears effects when Tab switches.
++    inventory.max_carried_heirlooms = 3
++    await approach("Watch")
++    press("interact")
++    press("use_heirloom")
++    await approach("MusicBox")
++    press("interact")
++    check(state.time_effect == "normal", "switching away cancels watch")
++    await approach("Mirror")
++    press("interact")
++    press("switch_heirloom")
++    check(state.active_heirloom == "Grandfather's Watch", "optional Tab mode cycles collected heirlooms")
++    inventory.max_carried_heirlooms = 1
++    press("restart")
++    check(state.collected_heirlooms.is_empty(), "final clean reset")
++
++    print("Integration checks: %d passed, %d failed" % [checks - failures, failures])
++    quit(1 if failures else 0)
