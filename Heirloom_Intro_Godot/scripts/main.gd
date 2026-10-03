@@ -167,6 +167,7 @@ func _build_intro() -> void:
 	objective.modulate = Color("f0e5d2")
 	content.add_child(objective)
 	var instructions := Label.new()
+	instructions.text = ""
 	instructions.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	instructions.add_theme_font_size_override("font_size", 20)
 	instructions.modulate = Color("e0d3bf")
